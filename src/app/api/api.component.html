@@ -1,0 +1,23 @@
+<form [formGroup]="userInputForm">
+  <input type="number" formControlName="userInput" min="1" max="50">
+  <button class="btn btn-primary" (click)="updateDataCount()">Get</button>
+</form>
+
+<div *ngIf="data.length > 0">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Id</th>
+        <th>Name</th>
+        <th>Price</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let product of data" class="table-row">
+        <td>{{ product.id }}</td>
+        <td>{{ product.title }}</td>
+        <td>{{ product.price }}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>

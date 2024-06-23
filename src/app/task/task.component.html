@@ -1,0 +1,86 @@
+<div class="container">
+  <!-- Display an error message if hasError() is true, else show the task table -->
+  <div *ngIf="hasError(); else taskTable" class="task-table d-flex align-items-center justify-content-center">
+    <p class="text-danger"><strong>Error fetching data from the server</strong></p>
+  </div>
+
+  <!-- Define a template for the task table -->
+  <ng-template #taskTable>
+    <div class="task-table">
+      <div class="headers">
+        <h2 class="table-title">Task operations from backend Django</h2>
+
+        <!-- Button to open the task form for adding or editing a task -->
+        <button class="btn add" (click)="openForm()">Add Task</button>
+      </div>
+
+      <!-- Display a message if there are no tasks available -->
+      <div *ngIf="!hasData()" class="text-center">
+        <p>No tasks available.</p>
+      </div>
+
+      <!-- Display the task table if there are tasks available -->
+      <div *ngIf="hasData()">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Title</th>
+              <th>Description</th>
+              <th>Completed</th>
+              <th>Edit</th>
+              <th>Delete</th>
+            </tr>
+          </thead>
+          <tbody class="text-center">
+            <!-- Loop through tasks and display them in the table -->
+            <tr *ngFor="let task of tasks">
+              <td>{{ task.id !== null && task.id !== undefined ? task.id : 'N/A' }}</td>
+              <td>{{ task.title }}</td>
+              <td>{{ task.description }}</td>
+              <td>{{ task.completed ? 'Yes' : 'No' }}</td>
+              <td>
+                <!-- Button to edit a task -->
+                <button class="btn btn-primary" (click)="openForm(task)">Edit</button>
+              </td>
+              <td>
+                <!-- Button to delete a task -->
+                <button class="btn btn-danger" (click)="deleteTask(task.id !== undefined ? task.id : null)">Delete</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </ng-template>
+
+  <!-- Display the task form if showForm is true -->
+  <div class="form-wrapper" *ngIf="showForm">
+    <div class="task-form">
+      <!-- Display the form header (Add Task or Edit Task) -->
+      <h2 class="text-center text-info">{{ formHeader }}</h2>
+      <div class="group">
+        <label for="title">Title:</label>
+        <!-- Input field for task title with data binding using ngModel -->
+        <input type="text" class="form-control" [(ngModel)]="title" name="title" required minlength="5" />
+      </div>
+      <div class="group">
+        <label for="description">Description:</label>
+        <!-- Input field for task description with data binding using ngModel -->
+        <input type="text" class="form-control" [(ngModel)]="description" name="description" required />
+      </div>
+      <div class="group">
+        <label for="completed">Completed:</label>
+        <!-- Checkbox for task completion status with data binding using ngModel -->
+        <input type="checkbox" class="form-control" [(ngModel)]="completed" name="completed" />
+      </div>
+
+      <div class="action">
+        <!-- Button to save changes when adding or editing a task -->
+        <button class="btn btn-primary save" (click)="saveTask()">Save Changes</button>
+        <!-- Button to cancel and close the task form -->
+        <button class="btn btn-danger cancel" (click)="closeForm()">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>

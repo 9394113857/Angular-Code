@@ -1,0 +1,32 @@
+<div class="container mt-5">
+    <div class="d-flex justify-content-center align-items-center mb-3">
+      <button class="btn btn-primary ml-2" (click)="updateData()">Get Mobiles</button>
+    </div>
+  
+    <div class="d-flex justify-content-center" *ngIf="data.length > 0">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Price</th>
+            <th>Ram</th>
+            <th>Storage</th>
+            <!-- Add more table headers if needed -->
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let mobile of data" class="table-row">
+            <td>{{ mobile.id }}</td>
+            <td>{{ mobile.name }}</td>
+            <td>{{ mobile.price }}</td>
+            <td>{{ mobile.ram }}</td>
+            <td>{{ mobile.storage }}</td>
+  
+            <!-- Add more table cells for other properties -->
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  

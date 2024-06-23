@@ -1,0 +1,22 @@
+/* Use Bootstrap classes for button styling */
+.btn-primary {
+    padding: 6px 20px;
+    border-radius: 5px;
+}
+
+/* Bootstrap's table and table cell styling */
+.table {
+    width: 80%;
+    margin: 20px auto;
+}
+
+/* Optional: Add additional styling for the table header cells */
+.table th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+}
+
+/* Custom style for table rows */
+.table-row {
+    background-color: #f8f9fa;
+}

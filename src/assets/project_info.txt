@@ -1,0 +1,14 @@
+ng serve --port 4200
+
+The Angular CLI will build and serve your project on the specified port. 
+Once the compilation is complete, you can access the project in your web browser 
+by navigating to http://localhost:<port-number> (e.g., http://localhost:4200).
+
+Remember that if the specified port is already in use by another application, 
+you will need to choose a different port number.
+
+Keep in mind that the Angular CLI provides many other options for customizing the development server. 
+You can find more information by running ng serve --help in the terminal.
+
+Eg:-
+ng serve --port 4201

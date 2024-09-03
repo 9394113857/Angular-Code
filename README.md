@@ -1,8 +1,10 @@
 # Angular-Code
-Angular-Code
 
-## Repository Link
-[Angular-Code Repository](https://github.com/9394113857/Angular-Code/tree/raghu)
+Angular-Code.
+
+Explore the code and see how the project is structured:
+
+- **Branch**: [raghu](https://github.com/9394113857/Angular-Code/tree/raghu)
 
 ## Instructions for Setting Up and Running the Project
 

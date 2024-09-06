@@ -10,7 +10,10 @@ export class TaskService {
   constructor(private http: HttpClient) { }
 
   // Define the URL for the API endpoint
-  url = "http://localhost:8000/api/tasks/";
+  // url = "http://localhost:8000/api/tasks/";
+
+  // Production URL
+  url = "https://djangoangular33.pythonanywhere.com/api/tasks/"
 
   // Fetch tasks from the server and return an Observable of an array of tasks
   fetchTasks(): Observable<any[]> {

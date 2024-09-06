@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
@@ -9,11 +10,19 @@ export class MobileService {
 
   constructor(private http: HttpClient) { }
 
-  url = "http://localhost:5000/mobiles"
+  // url = "http://localhost:5000/mobiles"
 
-  fetchMobiles(): Observable<any[]> {
-    return this.http.get<any[]>(this.url);
-  }
+     url = "http://127.0.0.1:5000/mobiles"
+
+     fetchMobiles(): Observable<any[]> {
+      return this.http.get<any[]>(this.url).pipe(
+        catchError((error: any) => {
+          console.error('Error fetching mobiles:', error);
+          return throwError(() => new Error('Failed to fetch mobiles from server'));
+        })
+      );
+    }
+    
 
   deleteMobile(id: number): Observable<any> {
     return this.http.delete<any>(this.url + "/" + id);

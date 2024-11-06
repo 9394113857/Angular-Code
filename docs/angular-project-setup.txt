@@ -14,3 +14,5 @@ npm install
 
 # 5. Start the Angular development server and automatically open the app in the default web browser
 ng serve --open
+
+# so working initial right.

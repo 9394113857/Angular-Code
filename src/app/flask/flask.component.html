@@ -10,8 +10,8 @@
         <button class="btn add" (click)="openForm()">Add Mobile</button>
       </div>
 
-       <!-- has Data or not -->
-       <div *ngIf="!hasData()" class="text-center">
+      <!-- has Data or not -->
+      <div *ngIf="!hasData()" class="text-center">
         <p>No users mobiles</p>
       </div>
 
@@ -55,24 +55,24 @@
       <h2 class="text-center text-info">{{ formHeader }}</h2>
       <div class="group">
         <label for="name">Name:</label>
-        <input type="text" class="form-control" [(ngModel)]="mobileName" name="name" required minlength="5" />
+        <input type="text" class="form-control" [(ngModel)]="mobileName" placeholder="Enter name">
       </div>
       <div class="group">
         <label for="price">Price:</label>
-        <input type="number" class="form-control" [(ngModel)]="price" name="price" required min="1000" />
+        <input type="number" class="form-control" [(ngModel)]="price" placeholder="Enter price">
       </div>
       <div class="group">
-        <label for="ram">RAM:</label>
-        <input type="number" class="form-control" [(ngModel)]="ram" name="ram" required />
+        <label for="ram">Ram:</label>
+        <input type="number" class="form-control" [(ngModel)]="ram" placeholder="Enter ram size">
       </div>
       <div class="group">
         <label for="storage">Storage:</label>
-        <input type="number" class="form-control" [(ngModel)]="storage" name="storage" required min="1" />
+        <input type="number" class="form-control" [(ngModel)]="storage" placeholder="Enter storage size">
       </div>
 
       <div class="action">
-        <button class="btn btn-primary save" (click)="saveMobile()">Save Changes</button>
-        <button class="btn btn-danger cancel" (click)="closeForm()">Cancel</button>
+        <button class="btn btn-danger" (click)="closeForm()">Cancel</button>
+        <button class="btn btn-success" (click)="saveMobile()">Save</button>
       </div>
     </div>
   </div>

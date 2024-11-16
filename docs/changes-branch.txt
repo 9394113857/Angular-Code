@@ -1,0 +1,39 @@
+This is the new git branch called "changes" for any kind of changes in progress okay. 
+
+
+Sample Commit Example so edit always this for every commit before confirm the commit:-
+git commit -m "Fix: Prevent reuse of old passwords during reset process
+
+1. Prevented reuse of old password during password reset
+2. Added validation to ensure the new password is different from the old password
+3. Updated form to display appropriate error message when old password is entered
+4. Adjusted error handling to show 'old password not allowed' message on the form
+5. Ensured user receives clear feedback when attempting to reuse the old password
+
+Date: 2024-11-13
+Time: 14:35"
+
+=================== Git Refined Message ============================
+
+git commit --amend -m "Feature: Implemented Angular CRUD operations and enhanced error handling
+
+1. Set up the Angular application and initialized services for managing mobile data.
+2. Created CRUD components and services for mobile management:
+   - GET /mobiles: Fetch all mobiles from the backend API.
+   - GET /mobiles/<id>: Fetch mobile data by ID.
+   - POST /mobiles: Add a new mobile with validation and duplicate check.
+   - PUT /mobiles/<id>: Update mobile data by ID, with error handling for missing resources.
+   - DELETE /mobiles/<id>: Delete mobile data by ID, with 'Resource not found' error handling.
+3. Enhanced error handling in Angular services with appropriate messages for missing or duplicate resources.
+4. Improved UI feedback for database operations (loading states, error messages).
+5. Structured Angular component responses with consistent formats for better UI/UX.
+6. Implemented form validation in Angular components for POST and PUT requests to ensure correct and complete data.
+
+Date: $(Get-Date -Format 'yyyy-MM-dd HH:mm')"
+
+ 
+
+
+
+
+

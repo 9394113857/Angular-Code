@@ -1,2 +1,29 @@
 From office system changes as on: 13-11-24 after ---> 6:00 PM 
 From office system changes as on: 15-11-24 after ---> 3:00 PM 
+-------------------------------------------------------------
+From office system changes as on: 25-11-24 after ---> 2:00 PM 
+-------------------------------------------------------------
+Yes, exactly! When you use git commit --amend -m "new message", you are overriding the last commit. 
+Essentially, you're editing the most recent commit to update its message, content, or both.
+
+Exact-Command:-
+git commit --amend -m "Feature: Project Status Overview
+
+1. Backend (Flask & Django): CRUD operations are working as expected.
+2. Frontend CRUD Operations: Frontend is working correctly for all CRUD operations.
+3. Frontend Validation: Validation logic is in development and not yet implemented.
+4. Integration: Frontend is properly integrated with both Flask and Django backends.
+5. Development Progress: Validation is in progress, testing will follow once implemented.
+
+Date: $(Get-Date -Format 'yyyy-MM-dd HH:mm')"
+-------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+

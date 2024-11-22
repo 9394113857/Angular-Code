@@ -1,3 +1,5 @@
+---------------------Angular-Code-------------------------
+
 This is the new git branch called "changes" for any kind of changes in progress okay. 
 
 
@@ -30,6 +32,10 @@ git commit --amend -m "Feature: Implemented Angular CRUD operations and enhanced
 6. Implemented form validation in Angular components for POST and PUT requests to ensure correct and complete data.
 
 Date: $(Get-Date -Format 'yyyy-MM-dd HH:mm')"
+
+========================
+
+
 
  
 

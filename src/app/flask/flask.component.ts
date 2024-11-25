@@ -51,7 +51,7 @@ export class FlaskComponent implements OnInit, OnDestroy {
             })
           );
         }),
-        delayWhen(data => {
+        delayWhen(() => {
           if (disconnected) {
             return interval(refreshIntervalMs);
           }
@@ -88,16 +88,18 @@ export class FlaskComponent implements OnInit, OnDestroy {
 
   deleteMobile(id: number | null) {
     if (id !== null) {
-      this.mobileService.deleteMobile(id).subscribe(
-        (res: any) => {
-          this.getMobiles();
-        },
-        (error: any) => {
-          console.log("Error deleting mobile:", error);
-        }
-      );
-    } else {
-      console.log("Invalid ID provided for deletion");
+      const confirmDelete = confirm("Are you sure you want to delete this mobile?");
+      if (confirmDelete) {
+        this.mobileService.deleteMobile(id).subscribe(
+          () => {
+            this.getMobiles();
+            alert('Mobile deleted successfully');
+          },
+          (error) => {
+            console.log("Error deleting mobile:", error);
+          }
+        );
+      }
     }
   }
 
@@ -131,7 +133,6 @@ export class FlaskComponent implements OnInit, OnDestroy {
   }
 
   saveMobile() {
-    this.showForm = false;
     let body: Mobile = {
       name: this.mobileName,
       price: this.price,
@@ -140,33 +141,41 @@ export class FlaskComponent implements OnInit, OnDestroy {
     };
 
     if (this.id !== null) {
-      body.id = this.id;
-      this.mobileService.putMobile(this.id, body).subscribe(
-        (res) => {
-          this.getMobiles();
-        },
-        (error) => {
-          console.log("Error updating mobile:", error);
-        }
-      );
+      const confirmUpdate = confirm("Are you sure you want to update this mobile?");
+      if (confirmUpdate) {
+        body.id = this.id;
+        this.mobileService.putMobile(this.id, body).subscribe(
+          () => {
+            this.getMobiles();
+            alert("Mobile updated successfully!");
+          },
+          (error) => {
+            console.log("Error updating mobile:", error);
+          }
+        );
+      } else {
+        this.clearForm();
+      }
     } else {
       this.mobileService.postMobile(body).subscribe(
-        (res) => {
+        () => {
           this.getMobiles();
+          alert("Mobile added successfully!");
         },
         (error) => {
           console.log("Error adding mobile:", error);
         }
       );
     }
+
+    this.showForm = false;
   }
 
   hasData(): boolean {
-    return this.mobiles !== undefined && this.mobiles.length > 0;
+    return this.mobiles && this.mobiles.length > 0;
   }
 
   hasError(): boolean {
-    return this.mobiles.length === 0;
+    return !this.mobiles || this.mobiles.length === 0;
   }
-
 }

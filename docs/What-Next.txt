@@ -5,9 +5,14 @@ Note working integration steps.
 3. Create Simple Guide
 Summarize steps in easy-to-follow bullet points.
 
---------------------------------------
-Changes as on: 25-11-24 around 3:30 PM
---------------------------------------
-Checking validation flow for update and delete final confirmations if not added already please
---------------------------------------
+-------------------------------------------------------------------------------
+Changes as on: 25-11-24 around 4:30 PM so these changes are finalized as of now
+-------------------------------------------------------------------------------
+1.	Alerts display messages during CRUD operations.
+2.	Options like "OK" or "Cancel" guide user actions.
+3.	Alerts provide feedback based on operation outcomes.
+4.	Finally, alerts are working to inform and guide the user throughout the process.
+------------------------------------------------------------------------------------
+
+
 

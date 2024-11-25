@@ -2,32 +2,36 @@ Title: Project Services and Components Overview
 
 ## Services
 
-1. **Service 1**:
-   - **Description**: Details about the first service.
-   - **Files**: 
-     - **service1.ts**: Contains the service logic.
-     - **service1.component.css**: Contains the styling for the service.
-
-2. **Service 2**:
-   - **Description**: Details about the second service.
+1. **Flask Backend Service**:
+   - **Description**: Backend logic implemented using Flask with SQLite database.
    - **Files**:
-     - **service2.ts**: Contains the service logic.
-     - **service2.component.css**: Contains the styling for the service.
+     - **mobile.service.ts**: Contains the service logic for Flask.
+     - **flask.component.ts**: TypeScript file for Flask component logic.
+     - **flask.component.css**: CSS file for styling the Flask component.
+     - **flask.component.html**: HTML template for the Flask component.
+
+2. **Django Backend Service**:
+   - **Description**: Backend logic implemented using Django with SQLite database.
+   - **Files**:
+     - **task.service.ts**: Contains the service logic for Django.
+     - **task.component.ts**: TypeScript file for Django component logic.
+     - **task.component.css**: CSS file for styling the Django component.
+     - **task.component.html**: HTML template for the Django component.
 
 ## Components
 
-1. **Component 1**:
-   - **Description**: Description of the first component.
+1. **Flask Component**:
+   - **Description**: The first component based on Flask.
    - **Files**:
-     - **component1.component.ts**: Contains the logic for the component.
-     - **component1.component.css**: Contains the styling for the component.
-     - **component1.component.html**: Contains the HTML template for the component.
+     - **flask.component.ts**: TypeScript file for Flask component logic.
+     - **flask.component.css**: CSS file for styling the Flask component.
+     - **flask.component.html**: HTML template for the Flask component.
 
-2. **Component 2**:
-   - **Description**: Description of the second component.
+2. **Django Component**:
+   - **Description**: The second component based on Django.
    - **Files**:
-     - **component2.component.ts**: Contains the logic for the component.
-     - **component2.component.css**: Contains the styling for the component.
-     - **component2.component.html**: Contains the HTML template for the component.
+     - **task.component.ts**: TypeScript file for Django component logic.
+     - **task.component.css**: CSS file for styling the Django component.
+     - **task.component.html**: HTML template for the Django component.
 
-Date: 2024-11-25 02:30 PM
+Date: 2024-11-25 03:30 PM

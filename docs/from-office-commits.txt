@@ -48,7 +48,38 @@ git commit -m "Feature: Project Services and Components Overview
 
 Date: $(Get-Date -Format 'yyyy-MM-dd hh:mm tt')"
 
----------------------------------------------------------------
+-------------------------------------------------------------- 
+From office system changes as on: 25-11-24 after ---> 3:00 PM
+--------------------------------------------------------------
+
+git commit -m "Feature: Project Services and Components Overview
+
+1. **Flask Backend Service**: 
+   - Backend logic implemented using Flask. 
+   - SQLite database used for data storage.
+
+2. **Django Backend Service**: 
+   - Backend logic implemented using Django. 
+   - SQLite database used for data storage.
+
+3. **Frontend Components**: 
+   - Component 1 (Frontend logic and styling implemented). 
+   - Component 2 (Frontend logic and styling implemented).
+   
+4. **Integration**: 
+   - Flask and Django backends properly integrated with frontend components.
+
+5. **Pending**: 
+   - Some validation and testing to be implemented.
+
+Date: $(date '+%Y-%m-%d %I:%M %p')"
+
+----------------------------------------------------------------
+From office system changes as on: 25-11-24 after ---> 3:30 PM 
+----------------------------------------------------------------
+
+
+
 
 
 

@@ -81,7 +81,7 @@ Both Flask and Django as its is flow all crud operatiosn working as of this poin
 ----------------------------------------------------------------
 From office system changes as on: 25-11-24 after ---> 4:30 PM
 ----------------------------------------------------------------
-git commit -m "Feature: Handling User Feedback with Alerts in CRUD Operations
+git commit -m "Feature: Added logging functionality for mobile CRUD operations and database interactions
 
 1. Alerts display messages during CRUD operations.
 2. Options like 'OK' or 'Cancel' guide user actions.

@@ -1,0 +1,33 @@
+Title: Project Services and Components Overview
+
+## Services
+
+1. **Service 1**:
+   - **Description**: Details about the first service.
+   - **Files**: 
+     - **service1.ts**: Contains the service logic.
+     - **service1.component.css**: Contains the styling for the service.
+
+2. **Service 2**:
+   - **Description**: Details about the second service.
+   - **Files**:
+     - **service2.ts**: Contains the service logic.
+     - **service2.component.css**: Contains the styling for the service.
+
+## Components
+
+1. **Component 1**:
+   - **Description**: Description of the first component.
+   - **Files**:
+     - **component1.component.ts**: Contains the logic for the component.
+     - **component1.component.css**: Contains the styling for the component.
+     - **component1.component.html**: Contains the HTML template for the component.
+
+2. **Component 2**:
+   - **Description**: Description of the second component.
+   - **Files**:
+     - **component2.component.ts**: Contains the logic for the component.
+     - **component2.component.css**: Contains the styling for the component.
+     - **component2.component.html**: Contains the HTML template for the component.
+
+Date: 2024-11-25 02:30 PM

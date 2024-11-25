@@ -17,6 +17,24 @@ git commit --amend -m "Feature: Project Status Overview
 
 Date: $(Get-Date -Format 'yyyy-MM-dd HH:mm')"
 -------------------------------------------------------------
+From office system changes as on: 25-11-24 after ---> 2:00 PM
+-------------------------------------------------------------
+Yes, using git commit -m "message" always creates a new commit. 
+It does not override any previous commits, 
+and the new commit is added on top of the existing commit history.
+
+Exact-Command:-
+git commit -m "Feature: Project Status Overview
+
+1. Backend (Flask & Django): CRUD operations are functional and working as expected.
+2. Frontend CRUD Operations: All CRUD operations on the frontend are properly functioning.
+3. Frontend Validation: Validation logic is still under development and not implemented yet.
+4. Integration: Frontend is integrated seamlessly with both Flask and Django backends.
+5. Development Progress: Validation is in progress and testing will begin after completion.
+
+Date: $(date '+%Y-%m-%d %H:%M')"
+-------------------------------------------------------------
+
 
 
 

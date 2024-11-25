@@ -75,11 +75,10 @@ git commit -m "Feature: Project Services and Components Overview
 Date: $(date '+%Y-%m-%d %I:%M %p')"
 
 ----------------------------------------------------------------
-From office system changes as on: 25-11-24 after ---> 3:30 PM 
+From office system changes as on: 25-11-24 after ---> 3:45 PM 
 ----------------------------------------------------------------
-
-
-
+Both Flask and Django as its is flow all crud operatiosn working as of this point of time
+----------------------------------------------------------------
 
 
 

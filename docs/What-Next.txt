@@ -1,2 +1,13 @@
-So Check Current Status from and to projects are working in office and laptop system anywhere first and confirm first at least somewhere its working and note all that successfully integrated steps as Documentations and make staright bullet points in short frame to explore anyone okay.
+1. Verify Compatibility
+Check if projects work on office and laptop systems.
+2. Document Success
+Note working integration steps.
+3. Create Simple Guide
+Summarize steps in easy-to-follow bullet points.
+
+--------------------------------------
+Changes as on: 25-11-24 around 3:30 PM
+--------------------------------------
+Checking validation flow for update and delete final confirmations if not added already please
+--------------------------------------
 

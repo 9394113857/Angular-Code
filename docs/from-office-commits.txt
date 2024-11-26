@@ -90,6 +90,22 @@ git commit -m "Feature: Added logging functionality for mobile CRUD operations a
 
 Date: $(Get-Date -Format 'yyyy-MM-dd hh:mm tt')"
 
+--------------------------------------------------------------
+From office system changes as on: 26-11-24 after ---> 12:30 PM 
+--------------------------------------------------------------
+
+git commit -m "Connect Flask and Django backends with Angular frontend
+
+1. Flask backend: Frontend and backend are connected and working with Angular components.
+2. Django backend: Frontend and backend are connected and working with Angular components.
+3. FastAPI backend: Pending integration or verification with frontend components.
+4. Spring Boot REST API: Pending integration or verification with frontend components.
+5. .NET Web App REST APIs: Pending integration or verification with frontend components.
+6. Node.js backend: Pending integration or verification with frontend components.
+
+Date: $(Get-Date -Format 'yyyy-MM-dd hh:mm tt')"
+
+
 
 
 

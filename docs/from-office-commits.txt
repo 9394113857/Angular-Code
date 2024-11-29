@@ -105,6 +105,24 @@ git commit -m "Connect Flask and Django backends with Angular frontend
 
 Date: $(Get-Date -Format 'yyyy-MM-dd hh:mm tt')"
 
+--------------------------------------------------------------
+From office system changes as on: 29-11-24 after ---> 06:30 PM 
+--------------------------------------------------------------
+
+git commit -m "Connect Flask and Django backends with Angular frontend
+
+1. Flask backend: Frontend and backend are connected and working with Angular components finalized.
+2. Django backend: Frontend and backend are connected and working with Angular components but in backend logs not added and in frontend also like FLask type validations part left in Django so yet to be implement.
+---------------------------------------------------------------------------------------------
+3. FastAPI backend: Pending integration or verification with frontend components.
+4. Spring Boot REST API: Pending integration or verification with frontend components.
+5. .NET Web App REST APIs: Pending integration or verification with frontend components.
+6. Node.js backend: Pending integration or verification with frontend components.
+
+From office system changes as on: 29-11-24 after ---> 06:30 PM
+
+Date: $(Get-Date -Format 'yyyy-MM-dd hh:mm tt')"
+
 
 
 

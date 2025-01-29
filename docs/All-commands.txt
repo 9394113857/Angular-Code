@@ -1,0 +1,38 @@
+# Clone the specific branch 'raghu' from the GitHub repository.
+git clone --branch raghu https://github.com/9394113857/angular-merges-changes.git
+
+# Install the dependencies specified in the package.json file.
+npm install
+
+# Serve the application locally using Angular's development server.
+ng serve
+
+# Stop the running Angular server. 'Ctrl + C' is the key combination to terminate the process.
+ctrl + c
+
+===========================
+
+# Final Production-Command:-
+# Execute the build:prod script to build the Angular project for production:
+npm run build:prod
+
+===========================
+
+When you run the npm run build:prod command, 
+you will be prompted to enter a build message. 
+
+The script will then execute the Angular build command and log the build status 
+along with the provided message to build_log.txt.
+
+# Build the Angular project for production, using the 'production' configuration settings.
+ng build --configuration=production
+
+npm run build:prod
+
+# Navigate into the project directory (this step assumes the directory name is the same as the repository name).
+cd angular-merges-changes   
+
+# Display help options for the 'ng' command.
+ng help
+
+

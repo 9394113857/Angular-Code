@@ -7,6 +7,7 @@ import { ApiService } from '../api.service';
   templateUrl: './api.component.html',
   styleUrls: ['./api.component.css']
 })
+
 export class APIComponent {
   data: any[] = [];
   userInputForm: FormGroup;
@@ -28,4 +29,4 @@ export class APIComponent {
         this.data = data;
       });
   }
-}
+}//class

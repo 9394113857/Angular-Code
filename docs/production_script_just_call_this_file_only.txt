@@ -1,0 +1,62 @@
+Steps to Follow from the Start
+Create the build.js File:
+powershell
+New-Item -Path . -Name "build.js" -ItemType "file"
+Open build.js in a Text Editor:
+•	Using Visual Studio Code:
+code build.js
+Using Notepad:
+notepad build.js
+
+Copy and Paste the Script into build.js:
+const { exec } = require('child_process');
+const readline = require('readline');
+const fs = require('fs');
+
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout
+});
+
+rl.question('Enter your build message: ', (message) => {
+  exec('ng build --configuration=production', (err, stdout, stderr) => {
+    const logMessage = `Build ${err ? 'failed' : 'completed successfully'} at ${new Date()}: ${message}\n`;
+    fs.appendFileSync('build_log.txt', logMessage);
+
+    if (err) {
+      console.error(`Build failed: ${stderr}`);
+    } else {
+      console.log(`Build completed successfully: ${stdout}`);
+    }
+
+    rl.close();
+  });
+});
+Save the build.js File:
+•	Save the changes in your text editor.
+Update package.json:
+•	Open package.json in your text editor and add the new script:
+Json:
+"scripts": {
+  "build:prod": "node build.js"
+}
+Run the Build Script:
+•	Navigate to your project directory and run the following command to execute the script:
+powershell
+npm run build:prod
+Running the Script
+When you run the npm run build:prod command, you will be prompted to enter a build message. The script will then execute the Angular build command and log the build status along with the provided message to build_log.txt.
+Enter Your Build Message
+You'll be prompted to enter a build message. For example:
+Plaintext:
+Enter your build message: Fixed critical bug in user authentication
+Build Process Output
+After entering your message, the script will execute the Angular production build (ng build --configuration=production). Depending on whether the build succeeds or fails, you'll see corresponding output similar.
+
+Build completed successfully: ...
+Build failed: <error message>
+Logging
+Regardless of whether the build succeeds or fails, the script will append a log message to build_log.txt in the project directory. For example, if the build succeeded:
+Build completed successfully at Wed Jun 23 2024 14:00:00 GMT+0000 (Coordinated Universal Time): Fixed critical bug in user authentication
+If the build failed, it would similarly log the failure with the timestamp and the message.
+

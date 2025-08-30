@@ -2,7 +2,7 @@
 # Navigate to the Angular frontend project directory
 cd /path/to/angular-frontend
 
-# Create an empty commit with a detailed message about the current status
+# Create an empty commit with a detailed message about the current Flask status
 git commit --allow-empty -m "No code changes, but Angular frontend flow with Flask service integration is fully functional.
 
 1. Frontend Components: No code changes, but frontend components are successfully integrated with the Flask backend.
@@ -10,6 +10,20 @@ git commit --allow-empty -m "No code changes, but Angular frontend flow with Fla
 3. Status: No new edits, but the frontend system is fully tested and functional.
 
 Date: $(Get-Date -Format 'yyyy-MM-dd hh:mm tt')"
+
+-----------------------------
+
+# Create an empty commit with a detailed message about the current Django status
+git commit --allow-empty -m "No code changes, but Angular frontend flow with Django backend integration is fully functional.
+
+# Django Backend Notes:
+1. Frontend Components: Angular components are successfully integrated with the Django REST API.
+2. Service Integration: End-to-end flow between Angular frontend and Django backend is smooth and operational.
+3. Status: No new edits, but the Angular + Django system is fully tested and functional.
+
+Date: $(Get-Date -Format 'yyyy-MM-dd hh:mm tt')"
+
+--------------------------------------------------------------------------
 
 # Push the commit to the 'Working-code' branch on the remote repository
 git push origin Working-code 

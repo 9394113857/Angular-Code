@@ -25,7 +25,7 @@ Date: $(Get-Date -Format 'yyyy-MM-dd hh:mm tt')"
   
 --------------------------------------------------------------------------
 
-# Push the commit to the 'Working-code' branch on the remote repository
-git push origin Working-code 
+# Push the commit to the 'Working-Code' branch on the remote repository
+git push origin Working-Code 
 
 

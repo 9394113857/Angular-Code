@@ -21,8 +21,8 @@ git commit --allow-empty -m "No code changes, but Angular frontend flow with Dja
 2. Service Integration: End-to-end flow between Angular frontend and Django backend is smooth and operational.
 3. Status: No new edits, but the Angular + Django system is fully tested and functional.
 
-Date: $(Get-Date -Format 'yyyy-MM-dd hh:mm tt')"
-
+Date: $(Get-Date -Format 'yyyy-MM-dd hh:mm tt')" 
+  
 --------------------------------------------------------------------------
 
 # Push the commit to the 'Working-code' branch on the remote repository

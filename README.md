@@ -6,6 +6,7 @@ Explore the code and see how the project is structured:
 
 - **Branch**: [raghu](https://github.com/9394113857/Angular-Code/tree/raghu)
 - **Branch**: [changes](https://github.com/9394113857/Angular-Code/tree/changes)
+- **Branch**: [Working-Code](https://github.com/9394113857/Angular-Code/tree/Working-Code)
 
 
 You can check out the branch to see the latest updates and features.
@@ -13,6 +14,8 @@ You can check out the branch to see the latest updates and features.
 [![View Project on GitHub](https://img.shields.io/badge/Branch_raghu-blue?style=for-the-badge&logo=github)](https://github.com/9394113857/Angular-Code/tree/raghu)
 
 [![View Project on GitHub](https://img.shields.io/badge/Branch_changes-blue?style=for-the-badge&logo=github)](https://github.com/9394113857/Angular-Code/tree/changes)
+
+[![View Project on GitHub](https://img.shields.io/badge/Branch_Working-Code-blue?style=for-the-badge&logo=github)](https://github.com/9394113857/Angular-Code/tree/Working-Code)
 
 
 ## Instructions for Setting Up and Running the Project

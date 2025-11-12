@@ -1,0 +1,8 @@
+# Serve the application locally using Angular's development server.
+ng serve
+
+# Alternatively, you can use this shorthand command:
+ng s
+
+# Stop the running Angular server. Use the 'Ctrl + C' key combination to terminate the process.
+Ctrl + C

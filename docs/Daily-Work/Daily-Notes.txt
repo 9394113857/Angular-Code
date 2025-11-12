@@ -1,0 +1,5 @@
+🚀 Angular App Features Overview
+1.	🔗 This Angular application connects to both Flask REST API and Django REST API.
+2.	⚙️ It supports all CRUD (Create, Read, Update, Delete) operations with each API.
+3.	🔄 Users can seamlessly switch between APIs for smooth data management tasks.
+

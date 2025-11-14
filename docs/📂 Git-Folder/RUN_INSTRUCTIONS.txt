@@ -1,0 +1,19 @@
+# Step 1: Install all project dependencies from package.json
+npm install
+
+# Step 2: Start the Angular development server (runs at http://localhost:4200/)
+ng serve
+
+# Step 3: (Optional) Start Angular dev server and automatically open the browser
+ng serve --open
+
+# Step 4: Build the project for production (output in /dist folder)
+ng build --prod
+
+# Step 5: Create a new Angular project (use if starting fresh)
+# ng new my-app
+
+# Step 6: Generate a new component (e.g., header component)
+# ng generate component header
+# or use the shortcut
+# ng g c header

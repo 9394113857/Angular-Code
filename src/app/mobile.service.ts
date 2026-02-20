@@ -3,94 +3,52 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
+export interface Mobile {
+  id?: number | null;
+  name: string;
+  price: number;
+  ram: number;
+  storage: number;
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class MobileService {
 
-  constructor(private http: HttpClient) { }
+  private baseUrl = "http://localhost:5000/mobiles";
 
-  // Backend API base URL
-  private url = "http://localhost:5000/mobiles";
+  constructor(private http: HttpClient) {}
 
-  /**
-   * Fetch all mobiles.
-   * Handles cases when the backend returns an empty dataset.
-   */
-  fetchMobiles(): Observable<any[]> {
-    return this.http.get<any[]>(this.url).pipe(
-      // Catch and handle errors globally for this request
-      catchError(this.handleError)
-    );
+  fetchMobiles(): Observable<Mobile[]> {
+    return this.http.get<Mobile[]>(this.baseUrl)
+      .pipe(catchError(this.handleError));
   }
 
-  /**
-   * Delete a mobile by ID.
-   * Handles scenarios where the resource does not exist.
-   * @param id - Mobile ID to be deleted.
-   */
+  postMobile(body: Mobile): Observable<any> {
+    return this.http.post(this.baseUrl, body)
+      .pipe(catchError(this.handleError));
+  }
+
+  putMobile(id: number, body: Mobile): Observable<any> {
+    return this.http.put(`${this.baseUrl}/${id}`, body)
+      .pipe(catchError(this.handleError));
+  }
+
   deleteMobile(id: number): Observable<any> {
-    return this.http.delete<any>(`${this.url}/${id}`).pipe(
-      // Catch and handle errors globally for this request
-      catchError(this.handleError)
-    );
+    return this.http.delete(`${this.baseUrl}/${id}`)
+      .pipe(catchError(this.handleError));
   }
 
-  /**
-   * Add a new mobile.
-   * Prevents duplicate entries based on backend validation.
-   * @param body - Mobile data to be added (name, price, ram, storage).
-   */
-  postMobile(body: any): Observable<any> {
-    return this.http.post<any>(this.url, body).pipe(
-      // Catch and handle errors globally for this request
-      catchError(this.handleError)
-    );
-  }
-
-  /**
-   * Update a mobile by ID.
-   * Handles scenarios where the resource does not exist.
-   * @param id - Mobile ID to be updated.
-   * @param body - New mobile data to update.
-   */
-  putMobile(id: number, body: any): Observable<any> {
-    return this.http.put<any>(`${this.url}/${id}`, body).pipe(
-      // Catch and handle errors globally for this request
-      catchError(this.handleError)
-    );
-  }
-
-  /**
-   * Centralized error handler for HTTP requests.
-   * Maps backend error codes to user-friendly error messages.
-   * @param error - The HTTP error response from the server.
-   */
   private handleError(error: HttpErrorResponse) {
-    let errorMessage = 'An unknown error occurred!'; // Default error message
+    let message = 'Something went wrong';
 
     if (error.error instanceof ErrorEvent) {
-      // Client-side or network error (e.g., no internet)
-      errorMessage = `Client-side error: ${error.error.message}`;
+      message = error.error.message;
     } else {
-      // Server-side error (response from backend)
-      switch (error.status) {
-        case 404: // Resource not found
-          errorMessage = 'Resource not found!';
-          break;
-        case 400: // Bad request (e.g., invalid data)
-          errorMessage = error.error.message || 'Invalid request data!';
-          break;
-        case 409: // Conflict (e.g., duplicate entry)
-          errorMessage = 'Duplicate entry detected!';
-          break;
-        default: // Generic server error
-          errorMessage = `Server-side error: ${error.message || 'Unknown issue'}`;
-          break;
-      }
+      message = `Error ${error.status}: ${error.message}`;
     }
 
-    // Return the error message wrapped in an Observable
-    return throwError(() => new Error(errorMessage));
+    return throwError(() => new Error(message));
   }
 }

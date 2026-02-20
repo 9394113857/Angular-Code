@@ -1,139 +1,73 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { MobileService } from '../mobile.service';
-import { interval, Subscription, throwError } from 'rxjs';
-import { switchMap, catchError, delayWhen } from 'rxjs/operators';
-
-interface Mobile {
-  id?: number | null;
-  name: string;
-  price: number;
-  ram: number;
-  storage: number;
-}
+import { Component, OnInit } from '@angular/core';
+import { MobileService, Mobile } from '../mobile.service';
 
 @Component({
   selector: 'app-flask',
   templateUrl: './flask.component.html',
   styleUrls: ['./flask.component.css']
 })
-export class FlaskComponent implements OnInit, OnDestroy {
-  formHeader: string = "Add Mobile";
+export class FlaskComponent implements OnInit {
+
   mobiles: Mobile[] = [];
-  mobileName: string = "";
-  price: number = 0;
-  ram: number = 0;
-  storage: number = 0;
-  showForm: boolean = false;
+
+  showForm = false;
+  isLoading = false;
+  hasServerError = false;
+
+  formHeader = "Add Mobile";
+
   id: number | null = null;
-  private refreshSubscription: Subscription | undefined;
+  mobileName = "";
+  price = 0;
+  ram = 0;
+  storage = 0;
 
   constructor(private mobileService: MobileService) {}
 
   ngOnInit(): void {
     this.getMobiles();
-    this.setupDataRefresh();
   }
 
-  private setupDataRefresh() {
-    const refreshIntervalMs = 60000; // 60,000 milliseconds = 60 seconds = 1 minute
-    let disconnected = false;
+  getMobiles(): void {
+    this.isLoading = true;
 
-    this.refreshSubscription = interval(refreshIntervalMs)
-      .pipe(
-        switchMap(() => {
-          if (disconnected) {
-            return throwError('Disconnected from server');
-          }
-          return this.mobileService.fetchMobiles().pipe(
-            catchError(() => {
-              disconnected = true;
-              return throwError('Disconnected from server');
-            })
-          );
-        }),
-        delayWhen(() => {
-          if (disconnected) {
-            return interval(refreshIntervalMs);
-          }
-          return interval(0);
-        })
-      )
-      .subscribe(
-        (data: Mobile[]) => {
-          this.mobiles = data;
-          disconnected = false;
-        },
-        (error: any) => {
-          console.log('Error fetching mobiles:', error);
-        }
-      );
-  }
-
-  ngOnDestroy(): void {
-    if (this.refreshSubscription) {
-      this.refreshSubscription.unsubscribe();
-    }
-  }
-
-  getMobiles() {
-    this.mobileService.fetchMobiles().subscribe(
-      (data: Mobile[]) => {
+    this.mobileService.fetchMobiles().subscribe({
+      next: (data: Mobile[]) => {
         this.mobiles = data;
+        this.hasServerError = false;
+        this.isLoading = false;
       },
-      (error: any) => {
-        console.log("Error fetching mobiles:", error);
+      error: () => {
+        this.hasServerError = true;
+        this.isLoading = false;
       }
-    );
+    });
   }
 
-  deleteMobile(id: number | null) {
-    if (id !== null) {
-      const confirmDelete = confirm("Are you sure you want to delete this mobile?");
-      if (confirmDelete) {
-        this.mobileService.deleteMobile(id).subscribe(
-          () => {
-            this.getMobiles();
-            alert('Mobile deleted successfully');
-          },
-          (error) => {
-            console.log("Error deleting mobile:", error);
-          }
-        );
-      }
-    }
-  }
-
-  openForm(data: Mobile | null = null) {
+  openForm(mobile?: Mobile): void {
     this.clearForm();
     this.showForm = true;
-    if (data) {
-      this.mobileName = data.name;
-      this.price = data.price;
-      this.ram = data.ram;
-      this.storage = data.storage;
-      this.id = data.id !== undefined ? data.id : null;
+
+    if (mobile) {
       this.formHeader = "Edit Mobile";
+      this.id = mobile.id ?? null;
+      this.mobileName = mobile.name;
+      this.price = mobile.price;
+      this.ram = mobile.ram;
+      this.storage = mobile.storage;
     } else {
-      this.id = null;
       this.formHeader = "Add Mobile";
     }
   }
 
-  closeForm() {
+  closeForm(): void {
     this.showForm = false;
     this.clearForm();
   }
 
-  clearForm() {
-    this.mobileName = "";
-    this.price = 0;
-    this.ram = 0;
-    this.storage = 0;
-    this.id = null;
-  }
+  saveMobile(): void {
 
-  saveMobile() {
-    let body: Mobile = {
+    const body: Mobile = {
       name: this.mobileName,
       price: this.price,
       ram: this.ram,
@@ -141,41 +75,33 @@ export class FlaskComponent implements OnInit, OnDestroy {
     };
 
     if (this.id !== null) {
-      const confirmUpdate = confirm("Are you sure you want to update this mobile?");
-      if (confirmUpdate) {
-        body.id = this.id;
-        this.mobileService.putMobile(this.id, body).subscribe(
-          () => {
-            this.getMobiles();
-            alert("Mobile updated successfully!");
-          },
-          (error) => {
-            console.log("Error updating mobile:", error);
-          }
-        );
-      } else {
-        this.clearForm();
-      }
+      this.mobileService.putMobile(this.id, body).subscribe(() => {
+        this.getMobiles();
+      });
     } else {
-      this.mobileService.postMobile(body).subscribe(
-        () => {
-          this.getMobiles();
-          alert("Mobile added successfully!");
-        },
-        (error) => {
-          console.log("Error adding mobile:", error);
-        }
-      );
+      this.mobileService.postMobile(body).subscribe(() => {
+        this.getMobiles();
+      });
     }
 
-    this.showForm = false;
+    this.closeForm();
   }
 
-  hasData(): boolean {
-    return this.mobiles && this.mobiles.length > 0;
+  deleteMobile(id?: number | null): void {
+    if (!id) return;
+
+    if (confirm("Are you sure you want to delete this mobile?")) {
+      this.mobileService.deleteMobile(id).subscribe(() => {
+        this.getMobiles();
+      });
+    }
   }
 
-  hasError(): boolean {
-    return !this.mobiles || this.mobiles.length === 0;
+  clearForm(): void {
+    this.id = null;
+    this.mobileName = "";
+    this.price = 0;
+    this.ram = 0;
+    this.storage = 0;
   }
 }

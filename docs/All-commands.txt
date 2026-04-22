@@ -5,7 +5,7 @@ git clone --branch raghu https://github.com/9394113857/angular-merges-changes.gi
 npm install
 
 # Serve the application locally using Angular's development server.
-ng serve
+ng serve 
 
 # Stop the running Angular server. 'Ctrl + C' is the key combination to terminate the process.
 ctrl + c

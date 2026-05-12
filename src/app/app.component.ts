@@ -12,6 +12,8 @@ export class AppComponent implements OnInit {
 
   systemStatus = '🟡 System Warming Up';
 
+  statusColor = 'yellow-status';
+
   constructor(private http: HttpClient) {}
 
   ngOnInit(): void {
@@ -22,12 +24,14 @@ export class AppComponent implements OnInit {
         next: () => {
 
           this.systemStatus = '🟢 System Ready';
+          this.statusColor = 'green-status';
 
         },
 
         error: () => {
 
           this.systemStatus = '🔴 System Offline';
+          this.statusColor = 'red-status';
 
         }
 

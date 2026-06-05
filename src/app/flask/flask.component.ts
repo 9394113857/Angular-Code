@@ -176,6 +176,6 @@ export class FlaskComponent implements OnInit, OnDestroy {
   }
 
   hasError(): boolean {
-    return !this.mobiles || this.mobiles.length === 0;
+    return false;
   }
 }

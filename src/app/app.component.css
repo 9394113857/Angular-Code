@@ -1,0 +1,72 @@
+.main-container {
+  font-family: Arial, sans-serif;
+  min-height: 100vh;
+}
+
+/* Top Title */
+
+.top-section {
+  text-align: center;
+  padding: 20px;
+}
+
+.top-section h1 {
+  color: #333;
+}
+
+/* Navbar */
+
+ul {
+  list-style-type: none;
+  display: flex;
+  gap: 15px;
+  padding: 15px;
+  background-color: #f2f2f2;
+  margin: 0;
+}
+
+li a {
+  text-decoration: none;
+  font-weight: bold;
+  color: #333;
+}
+
+li a:hover {
+  color: blue;
+}
+
+.active {
+  color: red;
+}
+
+/* Bottom Left Floating Status */
+
+.system-status {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+
+  padding: 12px 18px;
+
+  border-radius: 12px;
+
+  color: white;
+
+  font-weight: bold;
+
+  box-shadow: 0px 2px 10px rgba(0,0,0,0.2);
+}
+
+/* Dynamic Colors */
+
+.green-status {
+  background-color: green;
+}
+
+.yellow-status {
+  background-color: orange;
+}
+
+.red-status {
+  background-color: red;
+}

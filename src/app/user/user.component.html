@@ -1,0 +1,63 @@
+<div class="container">
+    <div *ngIf="hasError(); else userTable" class="user-table d-flex align-items-center justify-content-center">
+      <p class="text-danger"><strong>Error fetching data from the server</strong></p>
+    </div>
+    
+    <ng-template #userTable>
+      <div class="user-table">
+        <div class="headers">
+          <h2 class="table-title">User operations from backend java</h2>
+          <button class="btn add" (click)="openForm()">Add User</button>
+        </div>
+        
+        <!-- has Data or not -->
+        <div *ngIf="!hasData()" class="text-center">
+          <p>No users available.</p>
+        </div>
+        
+        <table class="table" *ngIf="hasData()">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Email</th>
+              <th>Username</th>
+            </tr>
+          </thead>
+          
+          <tbody class="text-center">
+            <tr *ngFor="let user of users">
+              <td>{{ user.id !== null && user.id !== undefined ? user.id : 'N/A' }}</td>
+              <td>{{ user.email }}</td>
+              <td>{{ user.username }}</td>
+              <td>
+                <button class="btn btn-primary" (click)="openForm(user)">Edit</button>
+              </td>
+              <td>
+                <button class="btn btn-danger" (click)="deleteUser(user.id !== undefined ? user.id : null)">Delete</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </ng-template>
+    
+    <div class="form-wrapper" *ngIf="showForm">
+      <div class="user-form">
+        <h2 class="text-center text-info">{{ formHeader }}</h2>
+        <div class="group">
+          <label for="email">Email:</label>
+          <input type="email" class="form-control" [(ngModel)]="email" name="email" required />
+        </div>
+        <div class="group">
+          <label for="username">Username:</label>
+          <input type="text" class="form-control" [(ngModel)]="username" name="username" required />
+        </div>
+  
+        <div class="action">
+          <button class="btn btn-primary save" (click)="saveUser()">Save Changes</button>
+          <button class="btn btn-danger cancel" (click)="closeForm()">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  

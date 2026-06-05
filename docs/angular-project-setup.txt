@@ -1,0 +1,16 @@
+# 1. Clone the specific branch named 'raghu' from the repository
+git clone --branch raghu https://github.com/9394113857/Angular-Code.git
+
+# 2. Navigate into the project directory
+cd <project>
+
+# 3. Open the project in Visual Studio Code
+code .
+
+# In Visual Studio Code terminal (follow these steps):-
+
+# 4. Install the project's dependencies defined in package.json
+npm install
+
+# 5. Start the Angular development server and automatically open the app in the default web browser
+ng serve --open

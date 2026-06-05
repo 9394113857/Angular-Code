@@ -1,0 +1,141 @@
+From office system changes as on: 13-11-24 after ---> 6:00 PM 
+From office system changes as on: 15-11-24 after ---> 3:00 PM 
+-------------------------------------------------------------
+From office system changes as on: 25-11-24 after ---> 2:00 PM 
+-------------------------------------------------------------
+Yes, exactly! When you use git commit --amend -m "new message", you are overriding the last commit. 
+Essentially, you're editing the most recent commit to update its message, content, or both.
+
+Exact-Command:-
+git commit --amend -m "Feature: Project Status Overview
+
+1. Backend (Flask & Django): CRUD operations are working as expected.
+2. Frontend CRUD Operations: Frontend is working correctly for all CRUD operations.
+3. Frontend Validation: Validation logic is in development and not yet implemented.
+4. Integration: Frontend is properly integrated with both Flask and Django backends.
+5. Development Progress: Validation is in progress, testing will follow once implemented.
+
+Date: $(Get-Date -Format 'yyyy-MM-dd HH:mm')"
+
+-------------------------------------------------------------
+From office system changes as on: 25-11-24 after ---> 2:00 PM
+-------------------------------------------------------------
+Yes, using git commit -m "message" always creates a new commit. 
+It does not override any previous commits, 
+and the new commit is added on top of the existing commit history.
+
+Exact-Command:-
+git commit -m "Feature: Project Status Overview
+
+1. Backend (Flask & Django): CRUD operations are functional and working as expected.
+2. Frontend CRUD Operations: All CRUD operations on the frontend are properly functioning.
+3. Frontend Validation: Validation logic is still under development and not implemented yet.
+4. Integration: Frontend is integrated seamlessly with both Flask and Django backends.
+5. Development Progress: Validation is in progress and testing will begin after completion.
+
+Date: $(Get-Date -Format 'yyyy-MM-dd HH:mm')"
+
+-------------------------------------------------------------
+From office system changes as on: 25-11-24 after ---> 3:00 PM
+-------------------------------------------------------------
+
+git commit -m "Feature: Project Services and Components Overview
+
+1. Backend Services: Service 1 and Service 2 logic and styling implemented.
+2. Frontend Components: Component 1 and Component 2 with logic, styling, and HTML templates.
+3. Integration: Proper integration of services with components.
+4. Pending: Some validation and testing to be implemented.
+
+Date: $(Get-Date -Format 'yyyy-MM-dd hh:mm tt')"
+
+-------------------------------------------------------------- 
+From office system changes as on: 25-11-24 after ---> 3:00 PM
+--------------------------------------------------------------
+
+git commit -m "Feature: Project Services and Components Overview
+
+1. **Flask Backend Service**: 
+   - Backend logic implemented using Flask. 
+   - SQLite database used for data storage.
+
+2. **Django Backend Service**: 
+   - Backend logic implemented using Django. 
+   - SQLite database used for data storage.
+
+3. **Frontend Components**: 
+   - Component 1 (Frontend logic and styling implemented). 
+   - Component 2 (Frontend logic and styling implemented).
+   
+4. **Integration**: 
+   - Flask and Django backends properly integrated with frontend components.
+
+5. **Pending**: 
+   - Some validation and testing to be implemented.
+
+Date: $(date '+%Y-%m-%d %I:%M %p')"
+
+----------------------------------------------------------------
+From office system changes as on: 25-11-24 after ---> 3:45 PM 
+----------------------------------------------------------------
+Both Flask and Django as its is flow all crud operatiosn working as of this point of time
+----------------------------------------------------------------
+From office system changes as on: 25-11-24 after ---> 4:30 PM
+----------------------------------------------------------------
+git commit -m "Feature: Added logging functionality for mobile CRUD operations and database interactions
+
+1. Alerts display messages during CRUD operations.
+2. Options like 'OK' or 'Cancel' guide user actions.
+3. Alerts provide feedback based on operation outcomes.
+4. Finally, alerts are working to inform and guide the user throughout the process.
+
+Date: $(Get-Date -Format 'yyyy-MM-dd hh:mm tt')"
+
+--------------------------------------------------------------
+From office system changes as on: 26-11-24 after ---> 12:30 PM 
+--------------------------------------------------------------
+
+git commit -m "Connect Flask and Django backends with Angular frontend
+
+1. Flask backend: Frontend and backend are connected and working with Angular components.
+2. Django backend: Frontend and backend are connected and working with Angular components.
+3. FastAPI backend: Pending integration or verification with frontend components.
+4. Spring Boot REST API: Pending integration or verification with frontend components.
+5. .NET Web App REST APIs: Pending integration or verification with frontend components.
+6. Node.js backend: Pending integration or verification with frontend components.
+
+Date: $(Get-Date -Format 'yyyy-MM-dd hh:mm tt')"
+
+--------------------------------------------------------------
+From office system changes as on: 29-11-24 after ---> 06:30 PM 
+--------------------------------------------------------------
+
+git commit -m "Connect Flask and Django backends with Angular frontend
+
+1. Flask backend: Frontend and backend are connected and working with Angular components finalized.
+2. Django backend: Frontend and backend are connected and working with Angular components but in backend logs not added and in frontend also like FLask type validations part left in Django so yet to be implement.
+---------------------------------------------------------------------------------------------
+3. FastAPI backend: Pending integration or verification with frontend components.
+4. Spring Boot REST API: Pending integration or verification with frontend components.
+5. .NET Web App REST APIs: Pending integration or verification with frontend components.
+6. Node.js backend: Pending integration or verification with frontend components.
+
+From office system changes as on: 29-11-24 after ---> 06:30 PM
+
+Date: $(Get-Date -Format 'yyyy-MM-dd hh:mm tt')"
+-------------------------------------------------------------
+From office system changes as on: 9-12-24 after ---> 5:00 PM 
+-------------------------------------------------------------
+From office system changes as on: 18-12-24 after ---> 6:00 PM
+-------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+

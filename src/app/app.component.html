@@ -1,0 +1,51 @@
+<div class="main-container">
+
+  <div class="top-section">
+
+    <h1>{{ title }}</h1>
+
+  </div>
+
+  <ul>
+
+    <li>
+      <a routerLink="/" routerLinkActive="active">Home Page</a>
+    </li>
+
+    <li>
+      <a routerLink="flask" routerLinkActive="active">Flask</a>
+    </li>
+
+    <li>
+      <a routerLink="task" routerLinkActive="active">Django</a>
+    </li>
+
+    <li>
+      <a routerLink="user" routerLinkActive="active">Java</a>
+    </li>
+
+    <li>
+      <a routerLink="node" routerLinkActive="active">NodeJS</a>
+    </li>
+
+    <li>
+      <a routerLink="api-call" routerLinkActive="active">API Call</a>
+    </li>
+
+    <li>
+      <a routerLink="random" routerLinkActive="active">Random</a>
+    </li>
+
+  </ul>
+
+  <router-outlet></router-outlet>
+
+  <!-- Bottom Left Status -->
+
+  <div class="system-status" [ngClass]="statusColor">
+
+    {{ systemStatus }}
+
+  </div>
+
+</div>

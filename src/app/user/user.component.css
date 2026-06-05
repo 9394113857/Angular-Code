@@ -1,0 +1,114 @@
+/* Styling for the user table container */
+.user-table {
+    width: 800px;
+    padding: 20px 25px;
+    background-color: white;
+    margin: 10px auto 0;
+    border-radius: 3px;
+  }
+  
+  /* Styling for the headers section */
+  .headers {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 30px;
+    background-color: #435d7d;
+  }
+  
+  .add {
+    background-color: #5cb85c;
+    color: white;
+  }
+  
+  /* Styling for buttons */
+  .btn-primary {
+    background-color: #337ab7;
+  }
+  
+  /* Center-align table headers */
+  th {
+    text-align: center;
+  }
+  
+  /* Styling for the form wrapper */
+  .form-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    width: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 100;
+  }
+  
+  /* Styling for the user form */
+  .user-form {
+    background-color: white;
+    width: 600px;
+    padding: 20px 50px;
+    border-radius: 5px;
+  }
+  
+  /* Styling for form controls */
+  .form-control {
+    width: 90%;
+  }
+  
+  /* Styling for input groups */
+  .group {
+    display: flex;
+    margin: 15px 0;
+  }
+  
+  /* Styling for group labels */
+  .group label {
+    width: 90px;
+    line-height: 40px;
+    height: 40px;
+  }
+  
+  /* Styling for action buttons */
+  .action {
+    display: flex;
+    justify-content: center;
+    gap: 100px;
+    margin: 20px;
+  }
+  
+  /* Styling for the overall container */
+  .container {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+  }
+  
+  /* Styling for the server info section */
+  .server-info {
+    text-align: center;
+    padding: 20px;
+    background-color: #f0f0f0;
+    margin-bottom: 20px;
+  }
+  
+  /* Center-align text */
+  .center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    text-align: center;
+  }
+  
+  .center-top {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    height: 100vh;
+    text-align: center;
+  }
+  

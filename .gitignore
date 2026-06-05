@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -160,3 +161,87 @@ cython_debug/
 #  and can be added to the global gitignore or merged into this file.  For a more nuclear
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
+=======
+# ===============================
+# Angular / Build Output
+# ===============================
+dist/
+tmp/
+out-tsc/
+.angular/
+.angular/cache/
+
+# ===============================
+# Node
+# ===============================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ===============================
+# Environment
+# ===============================
+.env
+.env.*
+
+# ===============================
+# IDE / Editors
+# ===============================
+.vscode/
+.idea/
+*.sublime-workspace
+*.launch
+.project
+.classpath
+.settings/
+
+# ===============================
+# Logs
+# ===============================
+logs/
+*.log
+
+# ===============================
+# Coverage
+# ===============================
+coverage/
+.nyc_output
+
+# ===============================
+# System Files
+# ===============================
+.DS_Store
+Thumbs.db
+
+# ===============================
+# Misc Caches
+# ===============================
+.cache/
+.parcel-cache
+.sass-cache/
+.eslintcache
+.stylelintcache
+
+# ===============================
+# Package Managers
+# ===============================
+bower_components/
+jspm_packages/
+web_modules/
+
+# ===============================
+# Optional / Build Tools
+# ===============================
+.grunt
+.serverless/
+.dynamodb/
+.fusebox/
+
+# ===============================
+# Custom (Your Project)
+# ===============================
+SQLite.py
+mobiles.db
+db.sqlite3
+>>>>>>> 8d7245e043a1c150fce29634cf3e5b901cf83c02

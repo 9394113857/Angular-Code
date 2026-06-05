@@ -1,0 +1,80 @@
+<div class="container">
+    <div *ngIf="hasError(); else mobTable" class="mob-table d-flex align-items-center justify-content-center">
+      <p class="text-danger"><strong>Error fetching data from the server</strong></p>
+    </div>
+  
+    <ng-template #mobTable>
+      <div class="mob-table">
+        <div class="headers">
+          <h2 class="table-title">Mobile operations from backend nodejs</h2>
+          <button class="btn add" (click)="openForm()">Add Mobile</button>
+        </div>
+  
+         <!-- has Data or not -->
+         <div *ngIf="!hasData()" class="text-center">
+          <p>No users mobiles</p>
+        </div>
+  
+        <table class="table" *ngIf="hasData()">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Price (Rs)</th>
+              <th>Ram</th>
+              <th>Storage</th>
+              <th></th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody class="text-center">
+            <tr *ngFor="let mobile of mobiles">
+              <td>{{ mobile.id !== null && mobile.id !== undefined ? mobile.id : 'N/A' }}</td>
+              <td>{{ mobile.name }}</td>
+              <td>{{ mobile.price }}</td>
+              <td>{{ mobile.ram }}</td>
+              <td>{{ mobile.storage }}</td>
+              <td>
+                <button class="btn btn-primary" (click)="openForm(mobile)">Edit</button>
+              </td>
+              <td>
+                <button class="btn btn-danger" (click)="deleteMobile(mobile.id !== undefined ? mobile.id : null)">Delete</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+  
+        <div class="text-center" *ngIf="!mobiles.length">
+          <p>No mobiles available.</p>
+        </div>
+      </div>
+    </ng-template>
+  
+    <div class="form-wrapper" *ngIf="showForm">
+      <div class="mobile-form">
+        <h2 class="text-center text-info">{{ formHeader }}</h2>
+        <div class="group">
+          <label for="name">Name:</label>
+          <input type="text" class="form-control" [(ngModel)]="mobileName" name="name" required minlength="5" />
+        </div>
+        <div class="group">
+          <label for="price">Price:</label>
+          <input type="number" class="form-control" [(ngModel)]="price" name="price" required min="1000" />
+        </div>
+        <div class="group">
+          <label for="ram">RAM:</label>
+          <input type="number" class="form-control" [(ngModel)]="ram" name="ram" required />
+        </div>
+        <div class="group">
+          <label for="storage">Storage:</label>
+          <input type="number" class="form-control" [(ngModel)]="storage" name="storage" required min="1" />
+        </div>
+  
+        <div class="action">
+          <button class="btn btn-primary save" (click)="saveMobile()">Save Changes</button>
+          <button class="btn btn-danger cancel" (click)="closeForm()">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  

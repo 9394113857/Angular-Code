@@ -1,0 +1,16 @@
+1.	Flask Backend:
+o	Frontend and backend are connected and working with Angular components.
+2.	Django Backend:
+o	Frontend and backend are connected and working with Angular components.
+3.	FastAPI Backend:
+o	Pending integration or verification with frontend components.
+4.	Spring Boot REST API:
+o	Pending integration or verification with frontend components.
+5.	.NET Web App REST APIs:
+o	Pending integration or verification with frontend components.
+6.	Node.js Backend:
+o	Pending integration or verification with frontend components.
+Summary:
+•	Flask and Django backends are fully connected and working with the frontend (Angular).
+•	FastAPI, Spring Boot, .NET, and Node.js backends are still pending for integration or verification with the frontend.
+

@@ -1,0 +1,37 @@
+Title: Project Services and Components Overview
+
+## Services
+
+1. **Flask Backend Service**:
+   - **Description**: Backend logic implemented using Flask with SQLite database.
+   - **Files**:
+     - **mobile.service.ts**: Contains the service logic for Flask.
+     - **flask.component.ts**: TypeScript file for Flask component logic.
+     - **flask.component.css**: CSS file for styling the Flask component.
+     - **flask.component.html**: HTML template for the Flask component.
+
+2. **Django Backend Service**:
+   - **Description**: Backend logic implemented using Django with SQLite database.
+   - **Files**:
+     - **task.service.ts**: Contains the service logic for Django.
+     - **task.component.ts**: TypeScript file for Django component logic.
+     - **task.component.css**: CSS file for styling the Django component.
+     - **task.component.html**: HTML template for the Django component.
+
+## Components
+
+1. **Flask Component**:
+   - **Description**: The first component based on Flask.
+   - **Files**:
+     - **flask.component.ts**: TypeScript file for Flask component logic.
+     - **flask.component.css**: CSS file for styling the Flask component.
+     - **flask.component.html**: HTML template for the Flask component.
+
+2. **Django Component**:
+   - **Description**: The second component based on Django.
+   - **Files**:
+     - **task.component.ts**: TypeScript file for Django component logic.
+     - **task.component.css**: CSS file for styling the Django component.
+     - **task.component.html**: HTML template for the Django component.
+
+Date: 2024-11-25 03:30 PM

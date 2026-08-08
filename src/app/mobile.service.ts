@@ -11,7 +11,7 @@ export class MobileService {
   constructor(private http: HttpClient) { }
 
   // Backend API base URL
-  private url = "http://localhost:5000/mobiles";
+  private url = 'https://flask-restapi-tzdm.onrender.com/mobiles';
 
   /**
    * Fetch all mobiles.

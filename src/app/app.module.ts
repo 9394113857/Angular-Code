@@ -31,6 +31,7 @@ import { NodeComponent } from './node/node.component';
 import { ApiService } from './api.service';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { RandomComponent } from './random/random.component';
+import { UserDotnetComponent } from './user-dotnet/user-dotnet.component';
 
 
 // NgModule is a decorator:
@@ -53,6 +54,7 @@ import { RandomComponent } from './random/random.component';
     JavaComponent,
     NodeComponent,
     RandomComponent,
+    UserDotnetComponent,
     
   ],
   imports: [

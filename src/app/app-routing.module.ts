@@ -12,7 +12,10 @@ import { SqliteComponent } from './sqlite/sqlite.component';
 import { DisplayComponent } from './display/display.component';
 import { CrudComponent } from './crud/crud.component';
 import { TaskComponent } from './task/task.component';
+
 import { UserComponent } from './user/user.component';
+import { UserDotnetComponent } from './user-dotnet/user-dotnet.component';
+
 import { JavaComponent } from './java/java.component';
 import { NodeComponent } from './node/node.component';
 import { RandomComponent } from './random/random.component';
@@ -60,12 +63,18 @@ const routes: Routes = [
   {
     path:'random',component:RandomComponent
   },
+  {
+    path:'user-dotnet',component:UserComponent
+  },
   
 
 
   {
     path:'**',component:NotFoundComponent
   }
+
+
+
 ];
 
 @NgModule({

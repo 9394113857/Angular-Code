@@ -1,0 +1,187 @@
+<div class="container">
+
+  <!-- Show error message when the backend cannot be reached -->
+  <div
+    *ngIf="hasError(); else userTable"
+    class="user-table d-flex align-items-center justify-content-center"
+  >
+    <p class="text-danger">
+      <strong>Error fetching data from the .NET server</strong>
+    </p>
+  </div>
+
+  <!-- User table -->
+  <ng-template #userTable>
+
+    <div class="user-table">
+
+      <!-- Header -->
+      <div class="headers">
+
+        <h2 class="table-title">
+          User operations from backend ASP.NET
+        </h2>
+
+        <button
+          class="btn add"
+          (click)="openForm()"
+        >
+          Add User
+        </button>
+
+      </div>
+
+      <!-- No users -->
+      <div
+        *ngIf="!hasData()"
+        class="text-center"
+      >
+        <p>No users available.</p>
+      </div>
+
+      <!-- Users table -->
+      <table
+        class="table"
+        *ngIf="hasData()"
+      >
+
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Username</th>
+            <th>Email</th>
+            <th>Edit</th>
+            <th>Delete</th>
+          </tr>
+        </thead>
+
+        <tbody class="text-center">
+
+          <tr *ngFor="let user of users">
+
+            <!-- ID -->
+            <td>
+              {{
+                user.id !== null && user.id !== undefined
+                  ? user.id
+                  : 'N/A'
+              }}
+            </td>
+
+            <!-- Username -->
+            <td>
+              {{ user.username }}
+            </td>
+
+            <!-- Email -->
+            <td>
+              {{ user.email }}
+            </td>
+
+            <!-- Edit -->
+            <td>
+              <button
+                class="btn btn-primary"
+                (click)="openForm(user)"
+              >
+                Edit
+              </button>
+            </td>
+
+            <!-- Delete -->
+            <td>
+              <button
+                class="btn btn-danger"
+                (click)="deleteUser(user.id !== undefined ? user.id : null)"
+              >
+                Delete
+              </button>
+            </td>
+
+          </tr>
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+  </ng-template>
+
+
+  <!-- Add/Edit User Form -->
+  <div
+    class="form-wrapper"
+    *ngIf="showForm"
+  >
+
+    <div class="user-form">
+
+      <!-- Form title -->
+      <h2 class="text-center text-info">
+        {{ formHeader }}
+      </h2>
+
+
+      <!-- Username -->
+      <div class="group">
+
+        <label for="username">
+          Username:
+        </label>
+
+        <input
+          type="text"
+          class="form-control"
+          [(ngModel)]="username"
+          name="username"
+          placeholder="Enter username"
+          required
+        />
+
+      </div>
+
+
+      <!-- Email -->
+      <div class="group">
+
+        <label for="email">
+          Email:
+        </label>
+
+        <input
+          type="email"
+          class="form-control"
+          [(ngModel)]="email"
+          name="email"
+          placeholder="Enter email"
+          required
+        />
+
+      </div>
+
+
+      <!-- Actions -->
+      <div class="action">
+
+        <button
+          class="btn btn-success save"
+          (click)="saveUser()"
+        >
+          Save
+        </button>
+
+        <button
+          class="btn btn-danger cancel"
+          (click)="closeForm()"
+        >
+          Cancel
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>

@@ -34,4 +34,39 @@ ng g s user-dotnet
 
 Only run that command for now.
 
+Step 3 — Generate the .NET User component
+Run:
+ng generate component user-dotnet
+
+
+Or short:
+
+ng g c user-dotnet
+
+What we're doing
+
+We're deliberately creating a new flow:
+src/app/
+│
+├── user.service.ts              ← existing Java flow
+├── user/                        ← existing Java UI
+│
+├── user-dotnet.service.ts       ← NEW .NET service
+└── user-dotnet/                 ← NEW .NET UI
+    ├── user-dotnet.component.ts
+    ├── user-dotnet.component.html
+    └── user-dotnet.component.css
+
+    So we won't mess with your existing Java user page.
+
+
+we shouldn't generate again blindly.
+
+Run:
+Get-ChildItem .\src\app\user-dotnet
+
+
+
+
+
 

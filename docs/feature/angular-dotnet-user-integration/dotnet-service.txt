@@ -1,0 +1,37 @@
+Exactly bro 👍 now we know your Angular project root is:
+
+E:\DevOps-Projects\Angular-Code
+
+But let's not blindly run commands yet. First we'll verify the project structure, because you mentioned you have a docs folder and you may be pasting files there.
+
+Step 1 — See what's actually in the root
+
+Run only this command:
+Get-ChildItem
+
+Perfect bro 😄 Now it's confirmed.
+
+E:\DevOps-Projects\Angular-Code is the actual Angular project root because it contains both:
+angular.json
+package.json
+src/
+node_modules/
+
+So do not cd anywhere. Stay here:
+PS E:\DevOps-Projects\Angular-Code>
+
+And yes, your docs folder is separate documentation; we won't put Angular source files there.
+
+Next command — create the service
+
+Run:
+ng generate service user-dotnet
+
+(Or)
+
+Short version:
+ng g s user-dotnet
+
+Only run that command for now.
+
+

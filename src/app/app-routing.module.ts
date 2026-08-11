@@ -64,7 +64,7 @@ const routes: Routes = [
     path:'random',component:RandomComponent
   },
   {
-    path:'user-dotnet',component:UserComponent
+    path:'user-dotnet',component:UserDotnetComponent
   },
   
 

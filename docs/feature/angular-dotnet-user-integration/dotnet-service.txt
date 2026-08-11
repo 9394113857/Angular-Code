@@ -65,8 +65,8 @@ we shouldn't generate again blindly.
 Run:
 Get-ChildItem .\src\app\user-dotnet
 
-
-
+# Check root path only:-
+ng serve
 
 
 

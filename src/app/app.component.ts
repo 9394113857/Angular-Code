@@ -17,23 +17,39 @@ export class AppComponent implements OnInit {
   constructor(private http: HttpClient) {}
 
   ngOnInit(): void {
+    // Flask API
     const flaskApi = this.http
       .get('https://flask-restapi-tzdm.onrender.com/')
-      .pipe(catchError(() => of(null)));
+      .pipe(
+        catchError(() => of(null))
+      );
 
+    // Django API
     const djangoApi = this.http
       .get('https://django-restapi-r7yj.onrender.com/api/tasks/')
-      .pipe(catchError(() => of(null)));
+      .pipe(
+        catchError(() => of(null))
+      );
 
+    // ASP.NET Core .NET 9 API
+    const dotnetApi = this.http
+      .get('https://dotnet-user-service-latest.onrender.com/health')
+      .pipe(
+        catchError(() => of(null))
+      );
+
+    // Check all three services
     forkJoin({
       flask: flaskApi,
       django: djangoApi,
+      dotnet: dotnetApi,
     }).subscribe({
       next: (response) => {
         const flaskIsRunning = response.flask !== null;
         const djangoIsRunning = response.django !== null;
+        const dotnetIsRunning = response.dotnet !== null;
 
-        if (flaskIsRunning && djangoIsRunning) {
+        if (flaskIsRunning && djangoIsRunning && dotnetIsRunning) {
           this.systemStatus = '🟢 System Ready';
           this.statusColor = 'green-status';
         } else {
@@ -41,6 +57,7 @@ export class AppComponent implements OnInit {
           this.statusColor = 'red-status';
         }
       },
+
       error: () => {
         this.systemStatus = '🔴 System Offline';
         this.statusColor = 'red-status';

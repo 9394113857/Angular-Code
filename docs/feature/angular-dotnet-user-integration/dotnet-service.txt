@@ -1,0 +1,74 @@
+Exactly bro 👍 now we know your Angular project root is:
+
+E:\DevOps-Projects\Angular-Code
+
+But let's not blindly run commands yet. First we'll verify the project structure, because you mentioned you have a docs folder and you may be pasting files there.
+
+Step 1 — See what's actually in the root
+
+Run only this command:
+Get-ChildItem
+
+Perfect bro 😄 Now it's confirmed.
+
+E:\DevOps-Projects\Angular-Code is the actual Angular project root because it contains both:
+angular.json
+package.json
+src/
+node_modules/
+
+So do not cd anywhere. Stay here:
+PS E:\DevOps-Projects\Angular-Code>
+
+And yes, your docs folder is separate documentation; we won't put Angular source files there.
+
+Next command — create the service
+
+Run:
+ng generate service user-dotnet
+
+(Or)
+
+Short version:
+ng g s user-dotnet
+
+Only run that command for now.
+
+Step 3 — Generate the .NET User component
+Run:
+ng generate component user-dotnet
+
+
+Or short:
+
+ng g c user-dotnet
+
+What we're doing
+
+We're deliberately creating a new flow:
+src/app/
+│
+├── user.service.ts              ← existing Java flow
+├── user/                        ← existing Java UI
+│
+├── user-dotnet.service.ts       ← NEW .NET service
+└── user-dotnet/                 ← NEW .NET UI
+    ├── user-dotnet.component.ts
+    ├── user-dotnet.component.html
+    └── user-dotnet.component.css
+
+    So we won't mess with your existing Java user page.
+
+
+we shouldn't generate again blindly.
+
+Run:
+Get-ChildItem .\src\app\user-dotnet
+
+# Check root path only:-
+ng serve
+
+# Both ends UI crud woking now 
+
+
+

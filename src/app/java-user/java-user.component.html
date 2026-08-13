@@ -1,0 +1,256 @@
+<!-- ============================================================
+     JAVA USER PAGE
+     ============================================================ -->
+
+<div class="java-user-page">
+
+
+    <!-- ==========================================================
+       HEADER
+       ========================================================== -->
+
+    <div class="java-header">
+
+        <h1>Java Spring Boot Users</h1>
+
+        <p>
+            Angular frontend connected to Spring Boot + Supabase
+        </p>
+
+        <div class="status">
+            Java Backend
+        </div>
+
+    </div>
+
+
+    <!-- ==========================================================
+       SUCCESS MESSAGE
+       ========================================================== -->
+
+    <div *ngIf="successMessage" class="message success">
+
+        {{ successMessage }}
+
+    </div>
+
+
+    <!-- ==========================================================
+       ERROR MESSAGE
+       ========================================================== -->
+
+    <div *ngIf="errorMessage" class="message error">
+
+        {{ errorMessage }}
+
+    </div>
+
+
+    <!-- ==========================================================
+       USER FORM
+       ========================================================== -->
+
+    <div class="user-form">
+
+        <h2>
+            {{ isEditing() ? 'Edit User' : 'Create User' }}
+        </h2>
+
+
+        <!-- Username -->
+
+        <div class="form-group">
+
+            <label for="username">
+                Username
+            </label>
+
+            <input id="username" type="text" [(ngModel)]="username" placeholder="Enter username" maxlength="100">
+
+        </div>
+
+
+        <!-- Email -->
+
+        <div class="form-group">
+
+            <label for="email">
+                Email
+            </label>
+
+            <input id="email" type="email" [(ngModel)]="email" placeholder="Enter email" maxlength="255">
+
+        </div>
+
+
+        <!-- Form buttons -->
+
+        <div class="form-actions">
+
+            <button type="button" class="btn primary" (click)="saveUser()">
+
+                {{ isEditing() ? 'Update User' : 'Create User' }}
+
+            </button>
+
+
+            <button *ngIf="isEditing()" type="button" class="btn secondary" (click)="clearForm()">
+
+                Cancel
+
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- ==========================================================
+       USERS SECTION
+       ========================================================== -->
+
+    <div class="users-section">
+
+
+        <!-- Users header -->
+
+        <div class="users-header">
+
+            <h2>
+                Java Backend Users
+            </h2>
+
+            <button type="button" class="btn refresh" (click)="loadUsers()">
+
+                Refresh
+
+            </button>
+
+        </div>
+
+
+        <!-- Loading -->
+
+        <div *ngIf="loading" class="loading">
+
+            Loading users...
+
+        </div>
+
+
+        <!-- Empty -->
+
+        <div *ngIf="!loading && users.length === 0" class="empty">
+
+            No users found.
+
+        </div>
+
+
+        <!-- ========================================================
+         USER TABLE
+         ======================================================== -->
+
+        <div *ngIf="!loading && users.length > 0" class="table-wrapper">
+
+            <table class="user-table">
+
+                <thead>
+
+                    <tr>
+
+                        <th>ID</th>
+
+                        <th>Username</th>
+
+                        <th>Email</th>
+
+                        <th>Actions</th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                    <tr *ngFor="let user of users">
+
+                        <td>
+                            {{ user.id }}
+                        </td>
+
+                        <td>
+                            {{ user.username }}
+                        </td>
+
+                        <td>
+                            {{ user.email }}
+                        </td>
+
+                        <td class="actions">
+
+                            <button type="button" class="btn edit" (click)="editUser(user)">
+
+                                Edit
+
+                            </button>
+
+                            <button type="button" class="btn delete" (click)="deleteUser(user.id)">
+
+                                Delete
+
+                            </button>
+
+                        </td>
+
+                    </tr>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+
+    <!-- ==========================================================
+       BACKEND INFORMATION
+       ========================================================== -->
+
+    <div class="backend-info">
+
+        <h3>
+            Backend Information
+        </h3>
+
+        <p>
+            <strong>Frontend:</strong>
+            Angular
+        </p>
+
+        <p>
+            <strong>Backend:</strong>
+            Java Spring Boot
+        </p>
+
+        <p>
+            <strong>Database:</strong>
+            Supabase PostgreSQL
+        </p>
+
+        <p>
+            <strong>Deployment:</strong>
+            Render
+        </p>
+
+        <p>
+            <strong>API:</strong>
+            /api/users
+        </p>
+
+    </div>
+
+
+</div>

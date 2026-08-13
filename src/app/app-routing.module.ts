@@ -19,6 +19,7 @@ import { UserDotnetComponent } from './user-dotnet/user-dotnet.component';
 import { JavaComponent } from './java/java.component';
 import { NodeComponent } from './node/node.component';
 import { RandomComponent } from './random/random.component';
+import { JavaUserComponent } from './java-user/java-user.component';
 
 const routes: Routes = [
   {
@@ -66,9 +67,11 @@ const routes: Routes = [
   {
     path:'user-dotnet',component:UserDotnetComponent
   },
+  {
+    path:'java-user',component:JavaUserComponent
+  },
+
   
-
-
   {
     path:'**',component:NotFoundComponent
   }

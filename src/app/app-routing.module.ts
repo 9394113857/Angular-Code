@@ -55,9 +55,9 @@ const routes: Routes = [
   {
     path:'user',component:UserComponent
   },
-  {
-    path:'java',component:JavaComponent
-  },
+  // {
+  //   path:'java',component:JavaComponent
+  // },
   {
     path:'node',component:NodeComponent
   },
@@ -71,7 +71,7 @@ const routes: Routes = [
     path:'java-user',component:JavaUserComponent
   },
 
-  
+
   {
     path:'**',component:NotFoundComponent
   }

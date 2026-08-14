@@ -1,5 +1,6 @@
 <!-- ============================================================
      JAVA USER PAGE
+     LOCAL DEVELOPMENT VERSION
      ============================================================ -->
 
 <div class="java-user-page">
@@ -14,11 +15,11 @@
         <h1>Java Spring Boot Users</h1>
 
         <p>
-            Angular frontend connected to Spring Boot + Supabase
+            Angular frontend connected to local Spring Boot backend
         </p>
 
         <div class="status">
-            Java Backend
+            Local Java Backend
         </div>
 
     </div>
@@ -117,7 +118,7 @@
         <div class="users-header">
 
             <h2>
-                Java Backend Users
+                Local Java Backend Users
             </h2>
 
             <button type="button" class="btn refresh" (click)="loadUsers()">
@@ -196,6 +197,7 @@
 
                             </button>
 
+
                             <button type="button" class="btn delete" (click)="deleteUser(user.id)">
 
                                 Delete
@@ -216,13 +218,13 @@
 
 
     <!-- ==========================================================
-       BACKEND INFORMATION
+       LOCAL BACKEND INFORMATION
        ========================================================== -->
 
     <div class="backend-info">
 
         <h3>
-            Backend Information
+            Local Backend Information
         </h3>
 
         <p>
@@ -237,17 +239,27 @@
 
         <p>
             <strong>Database:</strong>
-            Supabase PostgreSQL
+            SQLite
         </p>
 
         <p>
-            <strong>Deployment:</strong>
-            Render
+            <strong>Migration:</strong>
+            Flyway
+        </p>
+
+        <p>
+            <strong>Backend URL:</strong>
+            http://localhost:8080
         </p>
 
         <p>
             <strong>API:</strong>
             /api/users
+        </p>
+
+        <p>
+            <strong>Environment:</strong>
+            Local Development
         </p>
 
     </div>

@@ -9,13 +9,14 @@ import { catchError } from 'rxjs/operators';
   styleUrls: ['./app.component.css'],
 })
 export class AppComponent implements OnInit {
+
   title = 'Angular_Test_App';
 
   // =========================================================
-  // Initial system status
+  // Overall system status
   // =========================================================
 
-  systemStatus = '🟡 System Warming Up';
+  systemStatus = '🟡 Checking System...';
   statusColor = 'yellow-status';
 
   constructor(private http: HttpClient) {}
@@ -23,11 +24,21 @@ export class AppComponent implements OnInit {
   ngOnInit(): void {
 
     // =========================================================
-    // Flask API
+    // FLASK REST API
     // =========================================================
-    // Flask backend health endpoint.
-    // Success  -> Flask is UP.
-    // Failure  -> Flask is DOWN.
+    //
+    // Endpoint:
+    // https://flask-restapi-tzdm.onrender.com/
+    //
+    // Expected successful response:
+    // {
+    //   "message": "Backend is running",
+    //   "service": "Flask REST API",
+    //   "status": "ok"
+    // }
+    //
+    // HTTP success = Flask is UP
+    // HTTP error   = Flask is DOWN
     // =========================================================
 
     const flaskApi = this.http
@@ -38,53 +49,25 @@ export class AppComponent implements OnInit {
 
 
     // =========================================================
-    // Django API
+    // DJANGO REST API
     // =========================================================
-    // Django backend tasks endpoint.
-    // Success  -> Django is UP.
-    // Failure  -> Django is DOWN.
+    //
+    // Endpoint:
+    // https://django-restapi-r7yj.onrender.com/
+    //
+    // Expected response:
+    // Django API is LIVE 🚀
+    //
+    // HTTP success = Django is UP
+    // HTTP error   = Django is DOWN
     // =========================================================
 
     const djangoApi = this.http
-      .get('https://django-restapi-r7yj.onrender.com/api/tasks/')
-      .pipe(
-        catchError(() => of(null))
-      );
-
-
-    // =========================================================
-    // ASP.NET Core .NET 9 API
-    // =========================================================
-    // ASP.NET Core health endpoint.
-    // Success  -> .NET is UP.
-    // Failure  -> .NET is DOWN.
-    // =========================================================
-
-    const dotnetApi = this.http
-      .get('https://dotnet-user-service-latest.onrender.com/health')
-      .pipe(
-        catchError(() => of(null))
-      );
-
-
-    // =========================================================
-    // Java Spring Boot API
-    // =========================================================
-    // Spring Boot Actuator health endpoint.
-    //
-    // Success  -> Java is UP.
-    // Failure  -> Java is DOWN.
-    //
-    // Java backend:
-    // https://java-springboot-user-backend.onrender.com/
-    //
-    // Health endpoint:
-    // /actuator/health
-    // =========================================================
-
-    const javaApi = this.http
       .get(
-        'https://java-springboot-user-backend.onrender.com/actuator/health'
+        'https://django-restapi-r7yj.onrender.com/',
+        {
+          responseType: 'text'
+        }
       )
       .pipe(
         catchError(() => of(null))
@@ -92,33 +75,87 @@ export class AppComponent implements OnInit {
 
 
     // =========================================================
-    // CHECK ALL FOUR BACKEND SERVICES
+    // ASP.NET CORE .NET 9 API
     // =========================================================
     //
-    // forkJoin waits until all four requests complete.
+    // Endpoint:
+    // https://dotnet-user-service-latest.onrender.com/
     //
-    // Each request returns:
+    // Expected response contains:
+    // DotNet User Service
+    // ASP.NET Core API running on Render
     //
-    //   Actual response -> Service is UP
-    //   null            -> Service is DOWN
+    // HTTP success = .NET is UP
+    // HTTP error   = .NET is DOWN
+    // =========================================================
+
+    const dotnetApi = this.http
+      .get(
+        'https://dotnet-user-service-latest.onrender.com/',
+        {
+          responseType: 'text'
+        }
+      )
+      .pipe(
+        catchError(() => of(null))
+      );
+
+
+    // =========================================================
+    // JAVA SPRING BOOT API
+    // =========================================================
     //
+    // Endpoint:
+    // https://java-springboot-user-backend.onrender.com/
+    //
+    // Expected response contains:
+    // Java Spring Boot Backend
+    // Backend is up and running successfully!
+    //
+    // HTTP success = Java is UP
+    // HTTP error   = Java is DOWN
+    // =========================================================
+
+    const javaApi = this.http
+      .get(
+        'https://java-springboot-user-backend.onrender.com/',
+        {
+          responseType: 'text'
+        }
+      )
+      .pipe(
+        catchError(() => of(null))
+      );
+
+
+    // =========================================================
+    // CHECK ALL FOUR BACKENDS
+    // =========================================================
+    //
+    // forkJoin waits for ALL four requests.
+    //
+    // Response != null -> service is UP
+    // Response == null -> service is DOWN
+    //
+    // IMPORTANT:
+    // The system becomes GREEN ONLY when ALL FOUR are UP.
     // =========================================================
 
     forkJoin({
       flask: flaskApi,
       django: djangoApi,
-      java: javaApi,
       dotnet: dotnetApi,
+      java: javaApi,
     }).subscribe({
 
       // =======================================================
-      // All API requests completed
+      // ALL CHECKS COMPLETED
       // =======================================================
 
       next: (response) => {
 
         // -----------------------------------------------------
-        // Flask status
+        // Check Flask
         // -----------------------------------------------------
 
         const flaskIsRunning =
@@ -126,7 +163,7 @@ export class AppComponent implements OnInit {
 
 
         // -----------------------------------------------------
-        // Django status
+        // Check Django
         // -----------------------------------------------------
 
         const djangoIsRunning =
@@ -134,31 +171,48 @@ export class AppComponent implements OnInit {
 
 
         // -----------------------------------------------------
-        // Java Spring Boot status
-        // -----------------------------------------------------
-
-        const javaIsRunning =
-          response.java !== null;
-
-
-        // -----------------------------------------------------
-        // ASP.NET Core status
+        // Check .NET
         // -----------------------------------------------------
 
         const dotnetIsRunning =
           response.dotnet !== null;
 
 
+        // -----------------------------------------------------
+        // Check Java
+        // -----------------------------------------------------
+
+        const javaIsRunning =
+          response.java !== null;
+
+
         // =====================================================
-        // ALL FOUR SERVICES ARE RUNNING
+        // STRICT OVERALL STATUS
+        // =====================================================
+        //
+        // ALL FOUR must be UP.
+        //
+        // If even ONE service is down:
+        //
+        // 🔴 System Offline
+        //
+        // Only when all four are up:
+        //
+        // 🟢 System Ready / Available
         // =====================================================
 
-        if (
+        const allServicesRunning =
           flaskIsRunning &&
           djangoIsRunning &&
-          javaIsRunning &&
-          dotnetIsRunning
-        ) {
+          dotnetIsRunning &&
+          javaIsRunning;
+
+
+        if (allServicesRunning) {
+
+          // ===================================================
+          // 🟢 ALL SERVICES ARE AVAILABLE
+          // ===================================================
 
           this.systemStatus = '🟢 System Ready';
           this.statusColor = 'green-status';
@@ -166,7 +220,7 @@ export class AppComponent implements OnInit {
         } else {
 
           // ===================================================
-          // ONE OR MORE SERVICES ARE UNAVAILABLE
+          // 🔴 ONE OR MORE SERVICES ARE DOWN
           // ===================================================
 
           this.systemStatus = '🔴 System Offline';
@@ -176,7 +230,7 @@ export class AppComponent implements OnInit {
 
 
       // =======================================================
-      // Unexpected error while checking services
+      // UNEXPECTED ERROR
       // =======================================================
 
       error: () => {

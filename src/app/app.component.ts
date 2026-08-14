@@ -25,9 +25,9 @@ export class AppComponent implements OnInit {
     // =========================================================
     // Flask API
     // =========================================================
-    // Flask backend health endpoint
-    // If the request succeeds, Flask is considered UP.
-    // If the request fails, catchError returns null.
+    // Flask backend health endpoint.
+    // Success  -> Flask is UP.
+    // Failure  -> Flask is DOWN.
     // =========================================================
 
     const flaskApi = this.http
@@ -40,8 +40,9 @@ export class AppComponent implements OnInit {
     // =========================================================
     // Django API
     // =========================================================
-    // Django backend tasks endpoint
-    // If the request succeeds, Django is considered UP.
+    // Django backend tasks endpoint.
+    // Success  -> Django is UP.
+    // Failure  -> Django is DOWN.
     // =========================================================
 
     const djangoApi = this.http
@@ -54,8 +55,9 @@ export class AppComponent implements OnInit {
     // =========================================================
     // ASP.NET Core .NET 9 API
     // =========================================================
-    // ASP.NET Core backend health endpoint
-    // If the request succeeds, .NET is considered UP.
+    // ASP.NET Core health endpoint.
+    // Success  -> .NET is UP.
+    // Failure  -> .NET is DOWN.
     // =========================================================
 
     const dotnetApi = this.http
@@ -68,13 +70,15 @@ export class AppComponent implements OnInit {
     // =========================================================
     // Java Spring Boot API
     // =========================================================
-    // Spring Boot Actuator health endpoint
-    // If the request succeeds, Java Spring Boot is considered UP.
+    // Spring Boot Actuator health endpoint.
     //
-    // Your Java backend root URL:
+    // Success  -> Java is UP.
+    // Failure  -> Java is DOWN.
+    //
+    // Java backend:
     // https://java-springboot-user-backend.onrender.com/
     //
-    // Health check endpoint:
+    // Health endpoint:
     // /actuator/health
     // =========================================================
 
@@ -88,12 +92,16 @@ export class AppComponent implements OnInit {
 
 
     // =========================================================
-    // Check all four backend services
+    // CHECK ALL FOUR BACKEND SERVICES
     // =========================================================
-    // forkJoin waits for all four API requests to complete.
-    // Each API returns either:
-    //   - actual response -> service is UP
-    //   - null            -> service is DOWN
+    //
+    // forkJoin waits until all four requests complete.
+    //
+    // Each request returns:
+    //
+    //   Actual response -> Service is UP
+    //   null            -> Service is DOWN
+    //
     // =========================================================
 
     forkJoin({
@@ -110,7 +118,7 @@ export class AppComponent implements OnInit {
       next: (response) => {
 
         // -----------------------------------------------------
-        // Check Flask
+        // Flask status
         // -----------------------------------------------------
 
         const flaskIsRunning =
@@ -118,7 +126,7 @@ export class AppComponent implements OnInit {
 
 
         // -----------------------------------------------------
-        // Check Django
+        // Django status
         // -----------------------------------------------------
 
         const djangoIsRunning =
@@ -126,7 +134,7 @@ export class AppComponent implements OnInit {
 
 
         // -----------------------------------------------------
-        // Check Java Spring Boot
+        // Java Spring Boot status
         // -----------------------------------------------------
 
         const javaIsRunning =
@@ -134,7 +142,7 @@ export class AppComponent implements OnInit {
 
 
         // -----------------------------------------------------
-        // Check ASP.NET Core
+        // ASP.NET Core status
         // -----------------------------------------------------
 
         const dotnetIsRunning =
@@ -153,17 +161,15 @@ export class AppComponent implements OnInit {
         ) {
 
           this.systemStatus = '🟢 System Ready';
-
           this.statusColor = 'green-status';
 
         } else {
 
           // ===================================================
-          // One or more services are unavailable
+          // ONE OR MORE SERVICES ARE UNAVAILABLE
           // ===================================================
 
           this.systemStatus = '🔴 System Offline';
-
           this.statusColor = 'red-status';
         }
       },
@@ -176,7 +182,6 @@ export class AppComponent implements OnInit {
       error: () => {
 
         this.systemStatus = '🔴 System Offline';
-
         this.statusColor = 'red-status';
       },
     });

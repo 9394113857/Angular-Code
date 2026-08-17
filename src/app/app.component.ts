@@ -22,67 +22,59 @@ import {
   PURPOSE
   ---------------------------------------------------------------
 
-  This component checks the availability of:
+  This component:
 
-      1. Flask
-      2. Django
-      3. Java Spring Boot
-      4. ASP.NET Core
+      1. Runs the Angular application.
+      2. Checks Flask.
+      3. Checks Django.
+      4. Checks Java Spring Boot.
+      5. Checks ASP.NET Core.
+      6. Displays individual UP/DOWN status.
+      7. Displays overall system status.
+      8. Displays a live 5-second countdown.
 
-  The UI shows:
+  ================================================================
 
-      🟢 UP
-      🔴 DOWN
-
-  for every individual backend.
-
-  OVERALL STATUS:
-
-      All four UP
-          =
-      🟢 System Ready / Available
-
-      One or more DOWN
-          =
-      🔴 System Offline
-
-
-  STATUS PANEL BEHAVIOR
+  COUNTDOWN BEHAVIOR
   ---------------------------------------------------------------
 
-  When Angular starts:
+  When the page loads:
 
-      showSystemStatus = true
+      5
 
-  The backend checks run.
+      ↓
 
-  The panel remains visible for 5 seconds.
+      4
 
-  After 5 seconds:
+      ↓
+
+      3
+
+      ↓
+
+      2
+
+      ↓
+
+      1
+
+      ↓
+
+      HIDE
+
+  Every number is displayed for approximately one second.
+
+  The countdown number blinks.
+
+  Every number uses a different color.
+
+  After 1:
 
       showSystemStatus = false
 
-  Therefore the complete status notification disappears.
+  The complete popup disappears.
 
-  If the user refreshes the page:
-
-      Angular starts again
-          ↓
-      showSystemStatus = true
-          ↓
-      status appears again
-          ↓
-      5 seconds
-          ↓
-      status disappears
-
-
-  IMPORTANT
-  ---------------------------------------------------------------
-
-  We do NOT force the system to green.
-
-  Green means that the actual backend health checks succeeded.
+  Refreshing the page starts the countdown again.
   ================================================================
 */
 
@@ -111,60 +103,84 @@ export class AppComponent implements OnInit {
   // ==============================================================
 
   /*
-    This is displayed at the top of the temporary status panel.
+    Initial state.
+
+    While the backend checks are running:
+
+        🟡 Checking System...
   */
 
   systemStatus = '🟡 Checking System...';
 
 
   /*
-    Controls the overall status color.
-
-    Possible values:
-
-        yellow-status
-        green-status
-        red-status
+    Overall status CSS class.
   */
 
   statusColor = 'yellow-status';
 
 
   // ==============================================================
-  // SHOW / HIDE STATUS PANEL
+  // SHOW / HIDE STATUS POPUP
   // ==============================================================
 
   /*
     TRUE:
 
-        Status panel is visible.
+        Popup is visible.
 
     FALSE:
 
-        Status panel is hidden.
-
-    It starts as TRUE so that the status is shown whenever the
-    page is loaded or refreshed.
+        Popup is hidden.
   */
 
   showSystemStatus = true;
 
 
   // ==============================================================
-  // STATUS DISPLAY TIME
+  // LIVE COUNTDOWN
   // ==============================================================
 
   /*
-    5000 milliseconds = 5 seconds.
+    Countdown starts at 5.
 
-    Change this value if you ever want:
+    It will become:
 
-        3000 = 3 seconds
-        4000 = 4 seconds
-        5000 = 5 seconds
-    */
+        5
+        4
+        3
+        2
+        1
+        0
+  */
 
-  private readonly STATUS_DISPLAY_TIME = 5000;
+  countdown = 5;
+
+
+  /*
+    CSS class used to give each countdown number a different
+    color.
+
+    The classes are:
+
+        countdown-red
+        countdown-orange
+        countdown-yellow
+        countdown-green
+        countdown-blue
+  */
+
+  countdownColor = 'countdown-red';
+
+
+  /*
+    Interval reference.
+
+    We keep this so we can stop the timer after the countdown
+    finishes.
+  */
+
+  private countdownTimer: any;
 
 
   // ==============================================================
@@ -172,15 +188,12 @@ export class AppComponent implements OnInit {
   // ==============================================================
 
   /*
-    These values represent the actual health of each backend.
+    Each service initially starts as false.
 
-    true:
+    After the health checks:
 
-        Backend responded successfully.
-
-    false:
-
-        Backend failed, timed out, or was blocked.
+        true  = UP
+        false = DOWN
   */
 
   flaskStatus = false;
@@ -202,7 +215,7 @@ export class AppComponent implements OnInit {
 
 
   // ==============================================================
-  // ANGULAR INITIALIZATION
+  // COMPONENT INITIALIZATION
   // ==============================================================
 
   ngOnInit(): void {
@@ -210,7 +223,7 @@ export class AppComponent implements OnInit {
 
     /*
       ============================================================
-      START BACKEND CHECKS
+      START BACKEND HEALTH CHECKS
       ============================================================
     */
 
@@ -219,24 +232,190 @@ export class AppComponent implements OnInit {
 
     /*
       ============================================================
-      AUTOMATICALLY HIDE STATUS PANEL
+      START 5-SECOND LIVE COUNTDOWN
       ============================================================
-
-      The panel starts visible.
-
-      After exactly 5 seconds it becomes hidden.
-
-      This happens every time the Angular component is created.
-
-      Therefore refreshing the browser causes the status panel to
-      appear again for another 5 seconds.
     */
 
-    setTimeout(() => {
+    this.startCountdown();
 
-      this.showSystemStatus = false;
+  }
 
-    }, this.STATUS_DISPLAY_TIME);
+
+  // ==============================================================
+  // START COUNTDOWN
+  // ==============================================================
+
+  startCountdown(): void {
+
+
+    /*
+      Reset everything.
+
+      This makes sure the countdown always starts at 5.
+    */
+
+    this.countdown = 5;
+
+    this.showSystemStatus = true;
+
+
+    /*
+      Set the first color.
+
+      5 = RED
+    */
+
+    this.updateCountdownColor();
+
+
+    /*
+      ============================================================
+      LIVE TIMER
+      ============================================================
+
+      Every 1 second:
+
+          5 -> 4
+          4 -> 3
+          3 -> 2
+          2 -> 1
+          1 -> HIDE
+
+      ============================================================
+    */
+
+    this.countdownTimer = setInterval(() => {
+
+
+      /*
+        Reduce countdown by one.
+      */
+
+      this.countdown--;
+
+
+      /*
+        ==========================================================
+        CHECK WHETHER COUNTDOWN FINISHED
+        ==========================================================
+      */
+
+      if (this.countdown <= 0) {
+
+
+        /*
+          Stop the interval.
+
+          No more timer events are needed.
+        */
+
+        clearInterval(this.countdownTimer);
+
+
+        /*
+          Hide the entire status popup.
+        */
+
+        this.showSystemStatus = false;
+
+
+        /*
+          Keep countdown at zero internally.
+        */
+
+        this.countdown = 0;
+
+
+        return;
+
+      }
+
+
+      /*
+        ==========================================================
+        CHANGE COUNTDOWN COLOR
+        ==========================================================
+
+        Every number gets a different color.
+      */
+
+      this.updateCountdownColor();
+
+    }, 1000);
+
+  }
+
+
+  // ==============================================================
+  // UPDATE COUNTDOWN COLOR
+  // ==============================================================
+
+  updateCountdownColor(): void {
+
+
+    /*
+      ============================================================
+      5 = RED
+      ============================================================
+    */
+
+    if (this.countdown === 5) {
+
+      this.countdownColor = 'countdown-red';
+
+    }
+
+
+    /*
+      ============================================================
+      4 = ORANGE
+      ============================================================
+    */
+
+    else if (this.countdown === 4) {
+
+      this.countdownColor = 'countdown-orange';
+
+    }
+
+
+    /*
+      ============================================================
+      3 = YELLOW
+      ============================================================
+    */
+
+    else if (this.countdown === 3) {
+
+      this.countdownColor = 'countdown-yellow';
+
+    }
+
+
+    /*
+      ============================================================
+      2 = GREEN
+      ============================================================
+    */
+
+    else if (this.countdown === 2) {
+
+      this.countdownColor = 'countdown-green';
+
+    }
+
+
+    /*
+      ============================================================
+      1 = BLUE
+      ============================================================
+    */
+
+    else if (this.countdown === 1) {
+
+      this.countdownColor = 'countdown-blue';
+
+    }
 
   }
 
@@ -246,20 +425,15 @@ export class AppComponent implements OnInit {
   // ==============================================================
 
   /*
-    This method performs a GET request to a backend.
+    Performs an HTTP GET request.
 
-    SUCCESS:
+    Successful response:
 
-        Returns true.
+        true
 
-    FAILURE:
+    Error:
 
-        Returns false.
-
-    We use responseType: 'text' because the health check does
-    not need to understand the backend's response format.
-
-    We only need to know whether the request succeeded.
+        false
   */
 
   private checkApi(
@@ -272,6 +446,12 @@ export class AppComponent implements OnInit {
       .get(
         url,
         {
+          /*
+            We only care whether the backend responds.
+
+            Therefore responseType is text.
+          */
+
           responseType: 'text'
         }
       )
@@ -283,10 +463,9 @@ export class AppComponent implements OnInit {
         // ========================================================
 
         /*
-          Render services can sometimes take a few seconds to
-          wake up.
+          Render services may need time to wake up.
 
-          We allow 20 seconds for each backend.
+          Allow 20 seconds.
         */
 
         timeout(20000),
@@ -311,23 +490,23 @@ export class AppComponent implements OnInit {
 
 
         // ========================================================
-        // FAILURE
+        // ERROR
         // ========================================================
 
         catchError((error) => {
 
 
           /*
-            Do not hide the real error.
+            Log the actual error.
 
-            This lets us identify:
+            This helps identify:
 
-              - CORS
-              - timeout
-              - 404
-              - 500
-              - network error
-              - incorrect URL
+                CORS
+                timeout
+                404
+                500
+                network error
+                wrong URL
           */
 
           console.error(
@@ -347,7 +526,7 @@ export class AppComponent implements OnInit {
 
 
   // ==============================================================
-  // CHECK ALL FOUR BACKENDS
+  // CHECK ALL BACKENDS
   // ==============================================================
 
   checkAllBackends(): void {
@@ -356,10 +535,6 @@ export class AppComponent implements OnInit {
     // ============================================================
     // FLASK
     // ============================================================
-
-    /*
-      Deployed Flask backend.
-    */
 
     const flaskApi = this.checkApi(
       'https://flask-restapi-tzdm.onrender.com/',
@@ -371,10 +546,6 @@ export class AppComponent implements OnInit {
     // DJANGO
     // ============================================================
 
-    /*
-      Deployed Django backend.
-    */
-
     const djangoApi = this.checkApi(
       'https://django-restapi-r7yj.onrender.com/',
       'Django'
@@ -384,10 +555,6 @@ export class AppComponent implements OnInit {
     // ============================================================
     // .NET
     // ============================================================
-
-    /*
-      Deployed ASP.NET Core backend.
-    */
 
     const dotnetApi = this.checkApi(
       'https://dotnet-user-service-latest.onrender.com/',
@@ -402,23 +569,18 @@ export class AppComponent implements OnInit {
     /*
       IMPORTANT:
 
-      The old local Java URL was:
+      Do NOT use:
 
           http://localhost:8080
 
-      That must NOT be used by the deployed Angular application.
+      because that is a local development address.
 
-      localhost means the computer where the browser is running.
+      The deployed Angular application needs the deployed Java
+      backend.
 
-      Your deployed Java backend is on Render.
-
-      Your Java application uses:
+      Java API:
 
           /api/users
-
-      Therefore we check:
-
-          https://java-springboot-user-backend.onrender.com/api/users
     */
 
     const javaApi = this.checkApi(
@@ -430,10 +592,6 @@ export class AppComponent implements OnInit {
     // ============================================================
     // RUN ALL FOUR CHECKS
     // ============================================================
-
-    /*
-      forkJoin waits until all four health checks finish.
-    */
 
     forkJoin({
 
@@ -456,9 +614,11 @@ export class AppComponent implements OnInit {
       next: (response) => {
 
 
-        // --------------------------------------------------------
-        // SAVE INDIVIDUAL RESULTS
-        // --------------------------------------------------------
+        /*
+          --------------------------------------------------------
+          STORE INDIVIDUAL RESULTS
+          --------------------------------------------------------
+        */
 
         this.flaskStatus = response.flask;
 
@@ -469,9 +629,11 @@ export class AppComponent implements OnInit {
         this.dotnetStatus = response.dotnet;
 
 
-        // --------------------------------------------------------
-        // CONSOLE DEBUGGING
-        // --------------------------------------------------------
+        /*
+          --------------------------------------------------------
+          DEBUG INFORMATION
+          --------------------------------------------------------
+        */
 
         console.log(
           '=============================================='
@@ -511,7 +673,7 @@ export class AppComponent implements OnInit {
 
 
         // ========================================================
-        // CHECK WHETHER ALL BACKENDS ARE UP
+        // CHECK ALL FOUR SERVICES
         // ========================================================
 
         const allServicesRunning =
@@ -529,18 +691,7 @@ export class AppComponent implements OnInit {
 
 
           /*
-            All four backend health checks succeeded.
-
-            Therefore show:
-
-                🟢 System Ready / Available
-
-            The individual services will ALSO show:
-
-                Flask   🟢 UP
-                Django  🟢 UP
-                Java    🟢 UP
-                .NET    🟢 UP
+            Every backend responded successfully.
           */
 
           this.systemStatus =
@@ -565,14 +716,7 @@ export class AppComponent implements OnInit {
 
 
           /*
-            One or more backend checks failed.
-
-            Therefore:
-
-                🔴 System Offline
-
-            The individual backend rows will show exactly which
-            services are DOWN.
+            At least one backend failed.
           */
 
           this.systemStatus =
@@ -582,9 +726,9 @@ export class AppComponent implements OnInit {
             'red-status';
 
 
-          // ------------------------------------------------------
-          // INDIVIDUAL DEBUG MESSAGES
-          // ------------------------------------------------------
+          /*
+            Individual debugging.
+          */
 
           if (!this.flaskStatus) {
 
@@ -648,6 +792,28 @@ export class AppComponent implements OnInit {
       }
 
     });
+
+  }
+
+
+  // ==============================================================
+  // COMPONENT DESTROY
+  // ==============================================================
+
+  /*
+    Stop the countdown timer if Angular destroys the component.
+
+    This prevents an unnecessary timer from continuing to run.
+  */
+
+  ngOnDestroy(): void {
+
+
+    if (this.countdownTimer) {
+
+      clearInterval(this.countdownTimer);
+
+    }
 
   }
 

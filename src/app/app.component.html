@@ -9,6 +9,7 @@
   <!-- ========================================================
        TOP SECTION
        ======================================================== -->
+
   <div class="top-section">
 
     <h1>{{ title }}</h1>
@@ -19,6 +20,7 @@
   <!-- ========================================================
        NAVIGATION MENU
        ======================================================== -->
+
   <ul>
 
     <!-- HOME -->
@@ -113,33 +115,34 @@
 
 
   <!-- ========================================================
-       ANGULAR ROUTER OUTLET
-       ========================================================
-
-       The selected Angular page appears here.
+       ANGULAR ROUTER
        ======================================================== -->
+
   <router-outlet></router-outlet>
 
 
   <!-- ========================================================
-       TEMPORARY BACKEND STATUS PANEL
+       TEMPORARY SYSTEM STATUS POPUP
        ========================================================
 
-       This panel:
+       This popup is visible only during the 5-second countdown.
 
-       1. Appears whenever the page is loaded/refreshed.
-       2. Shows the current overall status.
-       3. Shows ALL backend services separately.
-       4. Shows UP/DOWN for every backend.
-       5. Automatically disappears after 5 seconds.
+       Countdown:
 
-       Because position: fixed is used, this panel does NOT
-       disturb or move the normal page content.
+          5
+          4
+          3
+          2
+          1
+          ↓
+        HIDE
+
+       The popup is fixed to the bottom-left corner.
        ======================================================== -->
 
   <div
     *ngIf="showSystemStatus"
-    class="system-status"
+    class="system-status-popup"
     [ngClass]="statusColor"
   >
 
@@ -156,7 +159,32 @@
 
 
     <!-- ======================================================
-         STATUS SUBTITLE
+         LIVE COUNTDOWN
+         ====================================================== -->
+
+    <div
+      class="countdown-number"
+      [ngClass]="countdownColor"
+    >
+
+      {{ countdown }}
+
+    </div>
+
+
+    <!-- ======================================================
+         COUNTDOWN LABEL
+         ====================================================== -->
+
+    <div class="countdown-label">
+
+      seconds
+
+    </div>
+
+
+    <!-- ======================================================
+         BACKEND SERVICES
          ====================================================== -->
 
     <div class="system-status-subtitle">
@@ -247,12 +275,12 @@
 
 
     <!-- ======================================================
-         AUTO-HIDE MESSAGE
+         FINAL MESSAGE
          ====================================================== -->
 
-    <div class="status-auto-hide">
+    <div class="status-hide-message">
 
-      Automatically hiding in 5 seconds...
+      Auto closing...
 
     </div>
 

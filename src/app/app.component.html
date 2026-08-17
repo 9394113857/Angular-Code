@@ -114,44 +114,33 @@
 
   <!-- ========================================================
        ANGULAR ROUTER OUTLET
+       ========================================================
+
+       The selected Angular page appears here.
        ======================================================== -->
   <router-outlet></router-outlet>
 
 
   <!-- ========================================================
-       TEMPORARY SYSTEM STATUS PANEL
+       TEMPORARY BACKEND STATUS PANEL
        ========================================================
 
-       IMPORTANT:
+       This panel:
 
-       showSystemStatus controls whether this panel is visible.
+       1. Appears whenever the page is loaded/refreshed.
+       2. Shows the current overall status.
+       3. Shows ALL backend services separately.
+       4. Shows UP/DOWN for every backend.
+       5. Automatically disappears after 5 seconds.
 
-       When the page loads:
-
-          showSystemStatus = true
-
-       After 5 seconds:
-
-          showSystemStatus = false
-
-       Therefore the status panel behaves like a temporary
-       notification instead of permanently occupying the page.
+       Because position: fixed is used, this panel does NOT
+       disturb or move the normal page content.
        ======================================================== -->
 
   <div
     *ngIf="showSystemStatus"
     class="system-status"
     [ngClass]="statusColor"
-    style="
-      margin-top: 25px;
-      padding: 18px;
-      border: 2px solid #d0d0d0;
-      border-radius: 12px;
-      background: #ffffff;
-      max-width: 360px;
-      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
-      transition: all 0.3s ease;
-    "
   >
 
 
@@ -159,16 +148,7 @@
          OVERALL SYSTEM STATUS
          ====================================================== -->
 
-    <div
-      style="
-        text-align: center;
-        font-size: 20px;
-        font-weight: bold;
-        padding-bottom: 15px;
-        margin-bottom: 15px;
-        border-bottom: 2px solid #e0e0e0;
-      "
-    >
+    <div class="system-status-title">
 
       {{ systemStatus }}
 
@@ -176,48 +156,30 @@
 
 
     <!-- ======================================================
-         BACKEND SERVICES TITLE
+         STATUS SUBTITLE
          ====================================================== -->
 
-    <div
-      style="
-        font-size: 14px;
-        font-weight: bold;
-        margin-bottom: 10px;
-        color: #555;
-      "
-    >
+    <div class="system-status-subtitle">
+
       Backend Services
+
     </div>
 
 
     <!-- ======================================================
-         FLASK STATUS
+         FLASK
          ====================================================== -->
 
     <div
-      [ngClass]="flaskStatus ? 'service-ok' : 'service-error'"
-      style="
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 10px 12px;
-        margin-bottom: 8px;
-        border: 1px solid #d8d8d8;
-        border-radius: 7px;
-        background: #fafafa;
-      "
+      class="backend-status"
+      [ngClass]="flaskStatus ? 'backend-up' : 'backend-down'"
     >
 
-      <span
-        style="
-          font-weight: 600;
-        "
-      >
+      <span class="backend-name">
         Flask
       </span>
 
-      <span>
+      <span class="backend-state">
         {{ flaskStatus ? '🟢 UP' : '🔴 DOWN' }}
       </span>
 
@@ -225,32 +187,19 @@
 
 
     <!-- ======================================================
-         DJANGO STATUS
+         DJANGO
          ====================================================== -->
 
     <div
-      [ngClass]="djangoStatus ? 'service-ok' : 'service-error'"
-      style="
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 10px 12px;
-        margin-bottom: 8px;
-        border: 1px solid #d8d8d8;
-        border-radius: 7px;
-        background: #fafafa;
-      "
+      class="backend-status"
+      [ngClass]="djangoStatus ? 'backend-up' : 'backend-down'"
     >
 
-      <span
-        style="
-          font-weight: 600;
-        "
-      >
+      <span class="backend-name">
         Django
       </span>
 
-      <span>
+      <span class="backend-state">
         {{ djangoStatus ? '🟢 UP' : '🔴 DOWN' }}
       </span>
 
@@ -258,32 +207,19 @@
 
 
     <!-- ======================================================
-         JAVA STATUS
+         JAVA
          ====================================================== -->
 
     <div
-      [ngClass]="javaStatus ? 'service-ok' : 'service-error'"
-      style="
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 10px 12px;
-        margin-bottom: 8px;
-        border: 1px solid #d8d8d8;
-        border-radius: 7px;
-        background: #fafafa;
-      "
+      class="backend-status"
+      [ngClass]="javaStatus ? 'backend-up' : 'backend-down'"
     >
 
-      <span
-        style="
-          font-weight: 600;
-        "
-      >
+      <span class="backend-name">
         Java
       </span>
 
-      <span>
+      <span class="backend-state">
         {{ javaStatus ? '🟢 UP' : '🔴 DOWN' }}
       </span>
 
@@ -291,33 +227,32 @@
 
 
     <!-- ======================================================
-         .NET STATUS
+         .NET
          ====================================================== -->
 
     <div
-      [ngClass]="dotnetStatus ? 'service-ok' : 'service-error'"
-      style="
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 10px 12px;
-        border: 1px solid #d8d8d8;
-        border-radius: 7px;
-        background: #fafafa;
-      "
+      class="backend-status"
+      [ngClass]="dotnetStatus ? 'backend-up' : 'backend-down'"
     >
 
-      <span
-        style="
-          font-weight: 600;
-        "
-      >
+      <span class="backend-name">
         .NET
       </span>
 
-      <span>
+      <span class="backend-state">
         {{ dotnetStatus ? '🟢 UP' : '🔴 DOWN' }}
       </span>
+
+    </div>
+
+
+    <!-- ======================================================
+         AUTO-HIDE MESSAGE
+         ====================================================== -->
+
+    <div class="status-auto-hide">
+
+      Automatically hiding in 5 seconds...
 
     </div>
 

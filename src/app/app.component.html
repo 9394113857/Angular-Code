@@ -1,53 +1,143 @@
+<!--
+  ============================================================
+  MAIN APPLICATION CONTAINER
+  ============================================================
+-->
 <div class="main-container">
 
+  <!-- ========================================================
+       TOP SECTION
+       ======================================================== -->
   <div class="top-section">
 
+    <!-- Application title -->
     <h1>{{ title }}</h1>
 
   </div>
 
+
+  <!-- ========================================================
+       NAVIGATION MENU
+       ======================================================== -->
   <ul>
 
+    <!-- Home -->
     <li>
-      <a routerLink="/" routerLinkActive="active">Home Page</a>
-    </li>
-
-    <li>
-      <a routerLink="flask" routerLinkActive="active">Flask</a>
-    </li>
-
-    <li>
-      <a routerLink="task" routerLinkActive="active">Django</a>
-    </li>
-
-    <li>
-      <a routerLink="java-user" routerLinkActive="active">Java Users</a>
+      <a
+        routerLink="/"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+      >
+        Home Page
+      </a>
     </li>
 
 
+    <!-- Flask -->
     <li>
-      <a routerLink="user-dotnet" routerLinkActive="active">.NET</a>  
+      <a
+        routerLink="flask"
+        routerLinkActive="active"
+      >
+        Flask
+      </a>
     </li>
 
+
+    <!-- Django -->
     <li>
-      <a routerLink="node" routerLinkActive="active">NodeJS</a>
+      <a
+        routerLink="task"
+        routerLinkActive="active"
+      >
+        Django
+      </a>
     </li>
 
+
+    <!-- Java -->
     <li>
-      <a routerLink="api-call" routerLinkActive="active">API Call</a>
+      <a
+        routerLink="java-user"
+        routerLinkActive="active"
+      >
+        Java Users
+      </a>
     </li>
 
+
+    <!-- .NET -->
     <li>
-      <a routerLink="random" routerLinkActive="active">Random</a>
+      <a
+        routerLink="user-dotnet"
+        routerLinkActive="active"
+      >
+        .NET
+      </a>
+    </li>
+
+
+    <!-- NodeJS -->
+    <li>
+      <a
+        routerLink="node"
+        routerLinkActive="active"
+      >
+        NodeJS
+      </a>
+    </li>
+
+
+    <!-- API Call -->
+    <li>
+      <a
+        routerLink="api-call"
+        routerLinkActive="active"
+      >
+        API Call
+      </a>
+    </li>
+
+
+    <!-- Random -->
+    <li>
+      <a
+        routerLink="random"
+        routerLinkActive="active"
+      >
+        Random
+      </a>
     </li>
 
   </ul>
 
-  <router-outlet></router-outlet> 
 
-  <!-- Bottom Left Status -->
+  <!-- ========================================================
+       ANGULAR ROUTER
+       ========================================================
+       The selected component/page will be displayed here.
+       ======================================================== -->
+  <router-outlet></router-outlet>
 
-  <div class="system-status" [ngClass]="statusColor">
+
+  <!-- ========================================================
+       SYSTEM STATUS INDICATOR
+       ========================================================
+
+       statusColor controls the CSS color.
+
+       Possible values:
+
+       yellow-status = checking
+       green-status  = all services available
+       red-status    = one or more services unavailable
+
+       systemStatus contains the text displayed to the user.
+       ======================================================== -->
+  <div
+    class="system-status"
+    [ngClass]="statusColor"
+  >
 
     {{ systemStatus }}
 

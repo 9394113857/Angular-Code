@@ -5,12 +5,12 @@
 -->
 <div class="main-container">
 
+
   <!-- ========================================================
-       TOP SECTION
+       APPLICATION TITLE
        ======================================================== -->
   <div class="top-section">
 
-    <!-- Application title -->
     <h1>{{ title }}</h1>
 
   </div>
@@ -21,7 +21,7 @@
        ======================================================== -->
   <ul>
 
-    <!-- Home -->
+    <!-- HOME -->
     <li>
       <a
         routerLink="/"
@@ -33,7 +33,7 @@
     </li>
 
 
-    <!-- Flask -->
+    <!-- FLASK -->
     <li>
       <a
         routerLink="flask"
@@ -44,7 +44,7 @@
     </li>
 
 
-    <!-- Django -->
+    <!-- DJANGO -->
     <li>
       <a
         routerLink="task"
@@ -55,7 +55,7 @@
     </li>
 
 
-    <!-- Java -->
+    <!-- JAVA -->
     <li>
       <a
         routerLink="java-user"
@@ -77,7 +77,7 @@
     </li>
 
 
-    <!-- NodeJS -->
+    <!-- NODE -->
     <li>
       <a
         routerLink="node"
@@ -88,7 +88,7 @@
     </li>
 
 
-    <!-- API Call -->
+    <!-- API CALL -->
     <li>
       <a
         routerLink="api-call"
@@ -99,7 +99,7 @@
     </li>
 
 
-    <!-- Random -->
+    <!-- RANDOM -->
     <li>
       <a
         routerLink="random"
@@ -113,33 +113,77 @@
 
 
   <!-- ========================================================
-       ANGULAR ROUTER
+       ROUTER OUTLET
        ========================================================
-       The selected component/page will be displayed here.
+
+       Angular loads the selected page/component here.
        ======================================================== -->
   <router-outlet></router-outlet>
 
 
   <!-- ========================================================
-       SYSTEM STATUS INDICATOR
-       ========================================================
-
-       statusColor controls the CSS color.
-
-       Possible values:
-
-       yellow-status = checking
-       green-status  = all services available
-       red-status    = one or more services unavailable
-
-       systemStatus contains the text displayed to the user.
+       SYSTEM STATUS
        ======================================================== -->
+
   <div
     class="system-status"
     [ngClass]="statusColor"
   >
 
+    <!-- Main status -->
     {{ systemStatus }}
+
+
+    <!-- ======================================================
+         INDIVIDUAL BACKEND STATUS
+         ======================================================
+
+         This is intentionally displayed so we can immediately
+         see which backend is causing the problem.
+         ====================================================== -->
+
+    <div class="backend-status-list">
+
+      <!-- Flask -->
+      <span
+        [class.service-ok]="flaskStatus"
+        [class.service-error]="!flaskStatus"
+      >
+        Flask:
+        {{ flaskStatus ? '🟢 UP' : '🔴 DOWN' }}
+      </span>
+
+
+      <!-- Django -->
+      <span
+        [class.service-ok]="djangoStatus"
+        [class.service-error]="!djangoStatus"
+      >
+        Django:
+        {{ djangoStatus ? '🟢 UP' : '🔴 DOWN' }}
+      </span>
+
+
+      <!-- Java -->
+      <span
+        [class.service-ok]="javaStatus"
+        [class.service-error]="!javaStatus"
+      >
+        Java:
+        {{ javaStatus ? '🟢 UP' : '🔴 DOWN' }}
+      </span>
+
+
+      <!-- .NET -->
+      <span
+        [class.service-ok]="dotnetStatus"
+        [class.service-error]="!dotnetStatus"
+      >
+        .NET:
+        {{ dotnetStatus ? '🟢 UP' : '🔴 DOWN' }}
+      </span>
+
+    </div>
 
   </div>
 

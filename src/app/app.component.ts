@@ -19,54 +19,34 @@ import {
   APP COMPONENT
   ================================================================
 
-  This component:
+  This component is responsible for:
 
-  1. Displays the Angular application.
-  2. Checks the availability of four backend services.
-  3. Shows:
+  1. Displaying the Angular application.
+  2. Checking the four backend services.
+  3. Showing the overall system status.
+  4. Showing individual backend status.
+  5. Logging failures to the browser console.
 
-       🟡 Checking System...
-
-     while the checks are running.
-
-  4. Shows:
-
-       🟢 System Ready
-
-     ONLY when ALL four backend APIs respond successfully.
-
-  5. Shows:
-
-       🔴 System Offline
-
-     when one or more backend APIs cannot be reached.
-
-  IMPORTANT:
+  IMPORTANT
   ---------------------------------------------------------------
-  A backend being accessible directly in the browser does NOT
-  automatically mean Angular is allowed to call it.
 
-  If the backend does not allow CORS requests from your Angular
-  application's domain, Angular will receive an HTTP/network
-  error even though the backend itself is running.
+  We should NOT check arbitrary "/" root URLs if the actual
+  Angular application is using a different API endpoint.
 
-  Therefore, if all APIs are actually running but this indicator
-  remains RED, check the browser Developer Tools -> Console and
-  Network tabs for CORS errors.
+  The health check should use an endpoint that is actually
+  available from the corresponding backend.
+
+  Also, CORS is controlled by the backend.
+
+  Angular cannot override a backend CORS policy.
   ================================================================
 */
 
 @Component({
   selector: 'app-root',
 
-  /*
-    HTML template file.
-  */
   templateUrl: './app.component.html',
 
-  /*
-    CSS file.
-  */
   styleUrls: ['./app.component.css'],
 })
 export class AppComponent implements OnInit {
@@ -80,45 +60,40 @@ export class AppComponent implements OnInit {
 
 
   // ==============================================================
-  // SYSTEM STATUS
+  // OVERALL SYSTEM STATUS
   // ==============================================================
 
   /*
-    Initial state.
-
-    When Angular starts, we do not yet know whether the four
-    backend services are available.
-
-    Therefore we initially display a yellow "Checking" status.
+    Initial status while the API checks are running.
   */
+
   systemStatus = '🟡 Checking System...';
 
 
   /*
-    CSS class used by app.component.css.
-
-    Initial value = yellow.
+    Initial CSS class.
   */
+
   statusColor = 'yellow-status';
 
 
   // ==============================================================
-  // OPTIONAL INDIVIDUAL SERVICE STATUS
+  // INDIVIDUAL SERVICE STATUS
   // ==============================================================
 
   /*
-    These variables are useful when debugging.
+    These values are initially false.
 
-    They tell us which individual service failed.
-
-    This is much better than simply returning null and hiding
-    the actual problem.
+    After the API checks finish they will become true/false.
   */
 
   flaskStatus = false;
+
   djangoStatus = false;
-  dotnetStatus = false;
+
   javaStatus = false;
+
+  dotnetStatus = false;
 
 
   // ==============================================================
@@ -137,13 +112,115 @@ export class AppComponent implements OnInit {
   ngOnInit(): void {
 
     /*
-      Start checking all backend services.
-
-      We keep this inside ngOnInit so that the health checks start
-      automatically when the Angular application loads.
+      Start checking the backend services.
     */
 
     this.checkAllBackends();
+
+  }
+
+
+  // ==============================================================
+  // GENERIC HEALTH CHECK
+  // ==============================================================
+
+  /*
+    This method performs a simple GET request.
+
+    If the request succeeds:
+
+      true
+
+    If the request fails:
+
+      false
+
+    We use text response handling because it avoids Angular
+    trying to parse different backend response formats as JSON.
+  */
+
+  private checkApi(
+    url: string,
+    serviceName: string
+  ): Observable<boolean> {
+
+    return this.http
+      .get(
+        url,
+        {
+          responseType: 'text'
+        }
+      )
+      .pipe(
+
+        /*
+          --------------------------------------------------------
+          TIMEOUT
+          --------------------------------------------------------
+
+          Render services can sometimes take a few seconds to
+          wake up.
+
+          We therefore give each service 20 seconds.
+        */
+
+        timeout(20000),
+
+
+        /*
+          --------------------------------------------------------
+          SUCCESS
+          --------------------------------------------------------
+
+          Any successful HTTP response means the backend endpoint
+          responded.
+
+          We don't care about the response body here.
+        */
+
+        map(() => {
+
+          console.log(
+            `🟢 ${serviceName} health check succeeded:`,
+            url
+          );
+
+          return true;
+
+        }),
+
+
+        /*
+          --------------------------------------------------------
+          FAILURE
+          --------------------------------------------------------
+
+          Log the actual error instead of hiding it.
+
+          This is very important for identifying:
+
+          - CORS
+          - timeout
+          - 404
+          - 500
+          - network errors
+          - Render sleeping
+          - wrong URL
+        */
+
+        catchError((error) => {
+
+          console.error(
+            `🔴 ${serviceName} health check failed:`,
+            url,
+            error
+          );
+
+          return of(false);
+
+        })
+
+      );
 
   }
 
@@ -154,240 +231,91 @@ export class AppComponent implements OnInit {
 
   checkAllBackends(): void {
 
+
     /*
-      --------------------------------------------------------------
-      IMPORTANT
-      --------------------------------------------------------------
+      ============================================================
+      FLASK
+      ============================================================
 
-      We use forkJoin() because we want to check all four APIs.
-
-      forkJoin waits until all four Observables complete.
-
-      Each health check returns:
-
-        true  = request succeeded
-        false = request failed
-
-      Therefore:
-
-        true + true + true + true
-                         |
-                         v
-                  System Ready
-
-      Anything else:
-
-        false somewhere
-              |
-              v
-         System Offline
+      Current Flask Render URL.
     */
 
-
-    // ============================================================
-    // FLASK API
-    // ============================================================
-
-    const flaskApi: Observable<boolean> = this.http
-      .get(
-        'https://flask-restapi-tzdm.onrender.com/',
-        {
-          /*
-            We don't need the response body.
-
-            We only care whether the HTTP request succeeds.
-          */
-          responseType: 'json'
-        }
-      )
-      .pipe(
-
-        /*
-          ----------------------------------------------------------
-          TIMEOUT
-          ----------------------------------------------------------
-
-          Render/free services can sometimes take a while to wake
-          up.
-
-          We allow up to 15 seconds.
-
-          If the request takes longer than 15 seconds, we consider
-          the health check unsuccessful.
-        */
-        timeout(15000),
-
-        /*
-          ----------------------------------------------------------
-          MAP SUCCESS TO TRUE
-          ----------------------------------------------------------
-
-          If Angular receives a successful HTTP response,
-          return true.
-        */
-        map(() => true),
-
-        /*
-          ----------------------------------------------------------
-          ERROR -> FALSE
-          ----------------------------------------------------------
-
-          Any error becomes false.
-
-          This includes:
-
-          - CORS errors
-          - Network errors
-          - Timeout
-          - DNS errors
-          - Server unavailable
-          - HTTP error responses
-        */
-        catchError((error) => {
-
-          console.error(
-            '❌ Flask API health check failed:',
-            error
-          );
-
-          return of(false);
-
-        })
-      );
+    const flaskApi = this.checkApi(
+      'https://flask-restapi-tzdm.onrender.com/',
+      'Flask'
+    );
 
 
-    // ============================================================
-    // DJANGO API
-    // ============================================================
+    /*
+      ============================================================
+      DJANGO
+      ============================================================
 
-    const djangoApi: Observable<boolean> = this.http
-      .get(
-        'https://django-restapi-r7yj.onrender.com/',
-        {
-          /*
-            Django returns text:
+      Current Django Render URL.
+    */
 
-              Django API is LIVE 🚀
-
-            Therefore responseType must be text.
-          */
-          responseType: 'text'
-        }
-      )
-      .pipe(
-
-        /*
-          Wait maximum 15 seconds.
-        */
-        timeout(15000),
-
-        /*
-          Successful HTTP request = true.
-        */
-        map(() => true),
-
-        /*
-          Failed request = false.
-        */
-        catchError((error) => {
-
-          console.error(
-            '❌ Django API health check failed:',
-            error
-          );
-
-          return of(false);
-
-        })
-      );
+    const djangoApi = this.checkApi(
+      'https://django-restapi-r7yj.onrender.com/',
+      'Django'
+    );
 
 
-    // ============================================================
-    // .NET API
-    // ============================================================
+    /*
+      ============================================================
+      .NET
+      ============================================================
 
-    const dotnetApi: Observable<boolean> = this.http
-      .get(
-        'https://dotnet-user-service-latest.onrender.com/',
-        {
-          /*
-            The .NET root endpoint returns text.
+      Current .NET Render URL.
+    */
 
-            Therefore we explicitly use responseType: text.
-          */
-          responseType: 'text'
-        }
-      )
-      .pipe(
-
-        /*
-          Maximum wait time.
-        */
-        timeout(15000),
-
-        /*
-          Successful request = true.
-        */
-        map(() => true),
-
-        /*
-          Failed request = false.
-        */
-        catchError((error) => {
-
-          console.error(
-            '❌ .NET API health check failed:',
-            error
-          );
-
-          return of(false);
-
-        })
-      );
+    const dotnetApi = this.checkApi(
+      'https://dotnet-user-service-latest.onrender.com/',
+      '.NET'
+    );
 
 
-    // ============================================================
-    // JAVA SPRING BOOT API
-    // ============================================================
+    /*
+      ============================================================
+      JAVA
+      ============================================================
 
-    const javaApi: Observable<boolean> = this.http
-      .get(
-        'https://java-springboot-user-backend.onrender.com/',
-        {
-          /*
-            Java endpoint returns text.
+      IMPORTANT:
 
-            Therefore use responseType: text.
-          */
-          responseType: 'text'
-        }
-      )
-      .pipe(
+      Your Java page currently displays:
 
-        /*
-          Maximum wait time.
-        */
-        timeout(15000),
+        http://localhost:8080
 
-        /*
-          Successful request = true.
-        */
-        map(() => true),
+      That is a LOCAL backend URL.
 
-        /*
-          Failed request = false.
-        */
-        catchError((error) => {
+      A deployed Angular application cannot use localhost to
+      communicate with YOUR computer's Java server.
 
-          console.error(
-            '❌ Java API health check failed:',
-            error
-          );
+      The deployed Angular application needs to use the deployed
+      Render Java backend.
 
-          return of(false);
+      We therefore use your Render Java URL here.
 
-        })
-      );
+      HOWEVER:
+
+      If the actual Java API endpoint is:
+
+        /api/users
+
+      and "/" does not respond correctly, change this URL to:
+
+        https://java-springboot-user-backend.onrender.com/api/users
+
+      That is preferable because your Java page says:
+
+        API: /api/users
+
+      ============================================================
+    */
+
+    const javaApi = this.checkApi(
+      'https://java-springboot-user-backend.onrender.com/api/users',
+      'Java'
+    );
 
 
     // ============================================================
@@ -396,37 +324,26 @@ export class AppComponent implements OnInit {
 
     forkJoin({
 
-      /*
-        Flask result.
-      */
       flask: flaskApi,
 
-      /*
-        Django result.
-      */
       django: djangoApi,
 
-      /*
-        .NET result.
-      */
       dotnet: dotnetApi,
 
-      /*
-        Java result.
-      */
       java: javaApi,
 
     }).subscribe({
 
       // ==========================================================
-      // ALL REQUESTS COMPLETED
+      // ALL CHECKS COMPLETED
       // ==========================================================
 
       next: (response) => {
 
+
         /*
           --------------------------------------------------------
-          STORE INDIVIDUAL RESULTS
+          SAVE INDIVIDUAL STATUS
           --------------------------------------------------------
         */
 
@@ -441,33 +358,24 @@ export class AppComponent implements OnInit {
 
         /*
           --------------------------------------------------------
-          PRINT RESULTS TO CONSOLE
+          DEBUG OUTPUT
           --------------------------------------------------------
-
-          This is very useful for debugging.
-
-          Open:
-
-            Browser
-              ->
-            F12
-              ->
-            Console
-
-          You should see something similar to:
-
-            Flask: true
-            Django: true
-            .NET: true
-            Java: true
         */
 
         console.log(
-          '================ BACKEND STATUS ================'
+          '================================================'
         );
 
         console.log(
-          'Flask:',
+          '        BACKEND SYSTEM STATUS'
+        );
+
+        console.log(
+          '================================================'
+        );
+
+        console.log(
+          'Flask :',
           this.flaskStatus
         );
 
@@ -477,108 +385,118 @@ export class AppComponent implements OnInit {
         );
 
         console.log(
-          '.NET:',
-          this.dotnetStatus
-        );
-
-        console.log(
-          'Java:',
+          'Java  :',
           this.javaStatus
         );
 
         console.log(
-          '=================================================='
+          '.NET  :',
+          this.dotnetStatus
+        );
+
+        console.log(
+          '================================================'
         );
 
 
         // ========================================================
-        // CHECK WHETHER ALL SERVICES ARE UP
+        // CHECK ALL SERVICES
         // ========================================================
 
         const allServicesRunning =
           this.flaskStatus &&
           this.djangoStatus &&
-          this.dotnetStatus &&
-          this.javaStatus;
+          this.javaStatus &&
+          this.dotnetStatus;
 
 
         // ========================================================
-        // ALL SERVICES ARE AVAILABLE
+        // ALL SERVICES UP
         // ========================================================
 
         if (allServicesRunning) {
 
           /*
-            Every API successfully responded.
+            ALL FOUR services successfully responded.
 
-            Therefore display green.
+            Therefore the system is genuinely ready.
           */
 
-          this.systemStatus = '🟢 System Ready';
+          this.systemStatus =
+            '🟢 System Ready / Available';
 
-          this.statusColor = 'green-status';
+          this.statusColor =
+            'green-status';
 
 
           console.log(
-            '🟢 ALL BACKEND SERVICES ARE AVAILABLE'
+            '🟢 SYSTEM READY - ALL BACKENDS AVAILABLE'
           );
 
         }
 
 
         // ========================================================
-        // ONE OR MORE SERVICES FAILED
+        // ONE OR MORE SERVICES DOWN
         // ========================================================
 
         else {
 
           /*
-            At least one request failed.
+            At least one backend failed.
 
-            Therefore display red.
+            We keep the overall status RED because it would be
+            misleading to show green when a required backend is
+            unavailable.
           */
 
-          this.systemStatus = '🔴 System Offline';
+          this.systemStatus =
+            '🔴 System Offline';
 
-          this.statusColor = 'red-status';
+          this.statusColor =
+            'red-status';
 
 
-          /*
-            ------------------------------------------------------
-            INDIVIDUAL DEBUGGING
-            ------------------------------------------------------
+          console.error(
+            '🔴 ONE OR MORE BACKENDS ARE NOT AVAILABLE'
+          );
 
-            This tells us exactly which service failed.
-          */
+
+          // ------------------------------------------------------
+          // Individual debugging
+          // ------------------------------------------------------
 
           if (!this.flaskStatus) {
 
             console.error(
-              '🔴 Flask is not reachable from Angular.'
+              '❌ Flask is unavailable.'
             );
 
           }
+
 
           if (!this.djangoStatus) {
 
             console.error(
-              '🔴 Django is not reachable from Angular.'
+              '❌ Django is unavailable.'
             );
 
           }
 
-          if (!this.dotnetStatus) {
-
-            console.error(
-              '🔴 .NET is not reachable from Angular.'
-            );
-
-          }
 
           if (!this.javaStatus) {
 
             console.error(
-              '🔴 Java is not reachable from Angular.'
+              '❌ Java is unavailable.'
+            );
+
+          }
+
+
+          if (!this.dotnetStatus) {
+
+            console.error(
+              '❌ .NET is unavailable.'
             );
 
           }
@@ -589,17 +507,10 @@ export class AppComponent implements OnInit {
 
 
       // ==========================================================
-      // FORKJOIN UNEXPECTED ERROR
+      // UNEXPECTED ERROR
       // ==========================================================
 
       error: (error) => {
-
-        /*
-          Normally our individual catchError() handlers prevent
-          this from happening.
-
-          But we keep this handler as an additional safety net.
-        */
 
         console.error(
           '❌ Unexpected system health-check error:',
@@ -607,9 +518,11 @@ export class AppComponent implements OnInit {
         );
 
 
-        this.systemStatus = '🔴 System Offline';
+        this.systemStatus =
+          '🔴 System Offline';
 
-        this.statusColor = 'red-status';
+        this.statusColor =
+          'red-status';
 
       }
 

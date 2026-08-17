@@ -7,7 +7,7 @@
 
 
   <!-- ========================================================
-       APPLICATION TITLE
+       TOP SECTION
        ======================================================== -->
   <div class="top-section">
 
@@ -77,7 +77,7 @@
     </li>
 
 
-    <!-- NODE -->
+    <!-- NODEJS -->
     <li>
       <a
         routerLink="node"
@@ -113,77 +113,214 @@
 
 
   <!-- ========================================================
-       ROUTER OUTLET
-       ========================================================
-
-       Angular loads the selected page/component here.
+       ANGULAR ROUTER OUTLET
        ======================================================== -->
   <router-outlet></router-outlet>
 
 
   <!-- ========================================================
-       SYSTEM STATUS
+       TEMPORARY SYSTEM STATUS PANEL
+       ========================================================
+
+       IMPORTANT:
+
+       showSystemStatus controls whether this panel is visible.
+
+       When the page loads:
+
+          showSystemStatus = true
+
+       After 5 seconds:
+
+          showSystemStatus = false
+
+       Therefore the status panel behaves like a temporary
+       notification instead of permanently occupying the page.
        ======================================================== -->
 
   <div
+    *ngIf="showSystemStatus"
     class="system-status"
     [ngClass]="statusColor"
+    style="
+      margin-top: 25px;
+      padding: 18px;
+      border: 2px solid #d0d0d0;
+      border-radius: 12px;
+      background: #ffffff;
+      max-width: 360px;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+      transition: all 0.3s ease;
+    "
   >
-
-    <!-- Main status -->
-    {{ systemStatus }}
 
 
     <!-- ======================================================
-         INDIVIDUAL BACKEND STATUS
-         ======================================================
-
-         This is intentionally displayed so we can immediately
-         see which backend is causing the problem.
+         OVERALL SYSTEM STATUS
          ====================================================== -->
 
-    <div class="backend-status-list">
+    <div
+      style="
+        text-align: center;
+        font-size: 20px;
+        font-weight: bold;
+        padding-bottom: 15px;
+        margin-bottom: 15px;
+        border-bottom: 2px solid #e0e0e0;
+      "
+    >
 
-      <!-- Flask -->
+      {{ systemStatus }}
+
+    </div>
+
+
+    <!-- ======================================================
+         BACKEND SERVICES TITLE
+         ====================================================== -->
+
+    <div
+      style="
+        font-size: 14px;
+        font-weight: bold;
+        margin-bottom: 10px;
+        color: #555;
+      "
+    >
+      Backend Services
+    </div>
+
+
+    <!-- ======================================================
+         FLASK STATUS
+         ====================================================== -->
+
+    <div
+      [ngClass]="flaskStatus ? 'service-ok' : 'service-error'"
+      style="
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 12px;
+        margin-bottom: 8px;
+        border: 1px solid #d8d8d8;
+        border-radius: 7px;
+        background: #fafafa;
+      "
+    >
+
       <span
-        [class.service-ok]="flaskStatus"
-        [class.service-error]="!flaskStatus"
+        style="
+          font-weight: 600;
+        "
       >
-        Flask:
+        Flask
+      </span>
+
+      <span>
         {{ flaskStatus ? '🟢 UP' : '🔴 DOWN' }}
       </span>
 
+    </div>
 
-      <!-- Django -->
+
+    <!-- ======================================================
+         DJANGO STATUS
+         ====================================================== -->
+
+    <div
+      [ngClass]="djangoStatus ? 'service-ok' : 'service-error'"
+      style="
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 12px;
+        margin-bottom: 8px;
+        border: 1px solid #d8d8d8;
+        border-radius: 7px;
+        background: #fafafa;
+      "
+    >
+
       <span
-        [class.service-ok]="djangoStatus"
-        [class.service-error]="!djangoStatus"
+        style="
+          font-weight: 600;
+        "
       >
-        Django:
+        Django
+      </span>
+
+      <span>
         {{ djangoStatus ? '🟢 UP' : '🔴 DOWN' }}
       </span>
 
+    </div>
 
-      <!-- Java -->
+
+    <!-- ======================================================
+         JAVA STATUS
+         ====================================================== -->
+
+    <div
+      [ngClass]="javaStatus ? 'service-ok' : 'service-error'"
+      style="
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 12px;
+        margin-bottom: 8px;
+        border: 1px solid #d8d8d8;
+        border-radius: 7px;
+        background: #fafafa;
+      "
+    >
+
       <span
-        [class.service-ok]="javaStatus"
-        [class.service-error]="!javaStatus"
+        style="
+          font-weight: 600;
+        "
       >
-        Java:
+        Java
+      </span>
+
+      <span>
         {{ javaStatus ? '🟢 UP' : '🔴 DOWN' }}
       </span>
 
+    </div>
 
-      <!-- .NET -->
+
+    <!-- ======================================================
+         .NET STATUS
+         ====================================================== -->
+
+    <div
+      [ngClass]="dotnetStatus ? 'service-ok' : 'service-error'"
+      style="
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 12px;
+        border: 1px solid #d8d8d8;
+        border-radius: 7px;
+        background: #fafafa;
+      "
+    >
+
       <span
-        [class.service-ok]="dotnetStatus"
-        [class.service-error]="!dotnetStatus"
+        style="
+          font-weight: 600;
+        "
       >
-        .NET:
+        .NET
+      </span>
+
+      <span>
         {{ dotnetStatus ? '🟢 UP' : '🔴 DOWN' }}
       </span>
 
     </div>
+
 
   </div>
 

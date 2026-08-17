@@ -19,28 +19,45 @@ import {
   APP COMPONENT
   ================================================================
 
-  This component is responsible for:
+  PURPOSE
+  ---------------------------------------------------------------
 
-  1. Displaying the Angular application.
-  2. Checking the four backend services.
-  3. Showing the overall system status.
-  4. Showing individual backend status.
-  5. Logging failures to the browser console.
+  This component:
+
+  1. Displays the Angular application.
+  2. Checks Flask.
+  3. Checks Django.
+  4. Checks Java Spring Boot.
+  5. Checks ASP.NET Core.
+  6. Shows individual backend status.
+  7. Shows the overall system status.
+
+  STATUS DISPLAY BEHAVIOR
+  ---------------------------------------------------------------
+
+  When the page is opened or refreshed:
+
+      Status panel appears.
+
+  After 5 seconds:
+
+      Status panel automatically disappears.
+
+  The backend health checks continue normally.
+
+  On another refresh:
+
+      The status panel appears again for 5 seconds.
 
   IMPORTANT
   ---------------------------------------------------------------
 
-  We should NOT check arbitrary "/" root URLs if the actual
-  Angular application is using a different API endpoint.
+  The green status is NOT forced.
 
-  The health check should use an endpoint that is actually
-  available from the corresponding backend.
-
-  Also, CORS is controlled by the backend.
-
-  Angular cannot override a backend CORS policy.
+  Green means all four backend checks actually succeeded.
   ================================================================
 */
+
 
 @Component({
   selector: 'app-root',
@@ -49,6 +66,8 @@ import {
 
   styleUrls: ['./app.component.css'],
 })
+
+
 export class AppComponent implements OnInit {
 
 
@@ -64,7 +83,7 @@ export class AppComponent implements OnInit {
   // ==============================================================
 
   /*
-    Initial status while the API checks are running.
+    Initial status while the backend health checks are running.
   */
 
   systemStatus = '🟡 Checking System...';
@@ -72,19 +91,56 @@ export class AppComponent implements OnInit {
 
   /*
     Initial CSS class.
+
+    Possible values:
+
+      yellow-status
+      green-status
+      red-status
   */
 
   statusColor = 'yellow-status';
 
 
   // ==============================================================
-  // INDIVIDUAL SERVICE STATUS
+  // SHOW / HIDE STATUS PANEL
   // ==============================================================
 
   /*
-    These values are initially false.
+    This controls the temporary status panel.
 
-    After the API checks finish they will become true/false.
+    true:
+
+      Status panel is visible.
+
+    false:
+
+      Status panel is hidden.
+  */
+
+  showSystemStatus = true;
+
+
+  /*
+    Number of milliseconds the status panel remains visible.
+
+    5000 milliseconds = 5 seconds.
+  */
+
+  private readonly STATUS_DISPLAY_TIME = 5000;
+
+
+  // ==============================================================
+  // INDIVIDUAL BACKEND STATUS
+  // ==============================================================
+
+  /*
+    Each service starts as false.
+
+    After the health check:
+
+      true  = UP
+      false = DOWN
   */
 
   flaskStatus = false;
@@ -112,31 +168,60 @@ export class AppComponent implements OnInit {
   ngOnInit(): void {
 
     /*
-      Start checking the backend services.
+      Start backend checks.
     */
 
     this.checkAllBackends();
+
+
+    /*
+      ============================================================
+      AUTOMATICALLY HIDE STATUS AFTER 5 SECONDS
+      ============================================================
+
+      The status panel is initially visible.
+
+      After 5 seconds:
+
+          showSystemStatus = false
+
+      Angular's *ngIf then removes the panel from the page.
+
+      If the user refreshes the page, the component is created
+      again and showSystemStatus starts as true again.
+
+      Therefore:
+
+          Refresh
+             ↓
+          Show status
+             ↓
+          5 seconds
+             ↓
+          Hide status
+      ============================================================
+    */
+
+    setTimeout(() => {
+
+      this.showSystemStatus = false;
+
+    }, this.STATUS_DISPLAY_TIME);
 
   }
 
 
   // ==============================================================
-  // GENERIC HEALTH CHECK
+  // GENERIC API HEALTH CHECK
   // ==============================================================
 
   /*
-    This method performs a simple GET request.
+    Performs a GET request to a backend.
 
-    If the request succeeds:
+    Returns:
 
-      true
-
-    If the request fails:
-
-      false
-
-    We use text response handling because it avoids Angular
-    trying to parse different backend response formats as JSON.
+      true  = backend responded
+      false = backend failed
   */
 
   private checkApi(
@@ -144,44 +229,46 @@ export class AppComponent implements OnInit {
     serviceName: string
   ): Observable<boolean> {
 
+
     return this.http
       .get(
         url,
         {
+          /*
+            Read response as text.
+
+            This works with both text and JSON backend responses
+            because this health check only cares about whether the
+            HTTP request succeeds.
+          */
+
           responseType: 'text'
         }
       )
       .pipe(
 
+
+        // ========================================================
+        // TIMEOUT
+        // ========================================================
+
         /*
-          --------------------------------------------------------
-          TIMEOUT
-          --------------------------------------------------------
+          Render services can sometimes take time to wake up.
 
-          Render services can sometimes take a few seconds to
-          wake up.
-
-          We therefore give each service 20 seconds.
+          Allow up to 20 seconds.
         */
 
         timeout(20000),
 
 
-        /*
-          --------------------------------------------------------
-          SUCCESS
-          --------------------------------------------------------
-
-          Any successful HTTP response means the backend endpoint
-          responded.
-
-          We don't care about the response body here.
-        */
+        // ========================================================
+        // SUCCESS
+        // ========================================================
 
         map(() => {
 
           console.log(
-            `🟢 ${serviceName} health check succeeded:`,
+            `🟢 ${serviceName} is UP`,
             url
           );
 
@@ -190,31 +277,31 @@ export class AppComponent implements OnInit {
         }),
 
 
-        /*
-          --------------------------------------------------------
-          FAILURE
-          --------------------------------------------------------
-
-          Log the actual error instead of hiding it.
-
-          This is very important for identifying:
-
-          - CORS
-          - timeout
-          - 404
-          - 500
-          - network errors
-          - Render sleeping
-          - wrong URL
-        */
+        // ========================================================
+        // FAILURE
+        // ========================================================
 
         catchError((error) => {
 
+          /*
+            Print the real error to the browser console.
+
+            This helps identify:
+
+              CORS
+              404
+              500
+              timeout
+              network error
+              wrong URL
+          */
+
           console.error(
-            `🔴 ${serviceName} health check failed:`,
+            `🔴 ${serviceName} health check failed`,
             url,
             error
           );
+
 
           return of(false);
 
@@ -232,13 +319,9 @@ export class AppComponent implements OnInit {
   checkAllBackends(): void {
 
 
-    /*
-      ============================================================
-      FLASK
-      ============================================================
-
-      Current Flask Render URL.
-    */
+    // ============================================================
+    // FLASK
+    // ============================================================
 
     const flaskApi = this.checkApi(
       'https://flask-restapi-tzdm.onrender.com/',
@@ -246,13 +329,9 @@ export class AppComponent implements OnInit {
     );
 
 
-    /*
-      ============================================================
-      DJANGO
-      ============================================================
-
-      Current Django Render URL.
-    */
+    // ============================================================
+    // DJANGO
+    // ============================================================
 
     const djangoApi = this.checkApi(
       'https://django-restapi-r7yj.onrender.com/',
@@ -260,13 +339,9 @@ export class AppComponent implements OnInit {
     );
 
 
-    /*
-      ============================================================
-      .NET
-      ============================================================
-
-      Current .NET Render URL.
-    */
+    // ============================================================
+    // .NET
+    // ============================================================
 
     const dotnetApi = this.checkApi(
       'https://dotnet-user-service-latest.onrender.com/',
@@ -274,42 +349,28 @@ export class AppComponent implements OnInit {
     );
 
 
-    /*
-      ============================================================
-      JAVA
-      ============================================================
+    // ============================================================
+    // JAVA
+    // ============================================================
 
+    /*
       IMPORTANT:
 
-      Your Java page currently displays:
+      Do NOT use:
 
-        http://localhost:8080
+          http://localhost:8080
 
-      That is a LOCAL backend URL.
+      for the deployed Angular application.
 
-      A deployed Angular application cannot use localhost to
-      communicate with YOUR computer's Java server.
+      localhost refers to the user's own computer.
 
-      The deployed Angular application needs to use the deployed
-      Render Java backend.
+      The deployed Java backend is on Render.
 
-      We therefore use your Render Java URL here.
+      Your Java application uses:
 
-      HOWEVER:
+          /api/users
 
-      If the actual Java API endpoint is:
-
-        /api/users
-
-      and "/" does not respond correctly, change this URL to:
-
-        https://java-springboot-user-backend.onrender.com/api/users
-
-      That is preferable because your Java page says:
-
-        API: /api/users
-
-      ============================================================
+      Therefore the health check uses the deployed API.
     */
 
     const javaApi = this.checkApi(
@@ -328,11 +389,13 @@ export class AppComponent implements OnInit {
 
       django: djangoApi,
 
-      dotnet: dotnetApi,
-
       java: javaApi,
 
-    }).subscribe({
+      dotnet: dotnetApi,
+
+    })
+    .subscribe({
+
 
       // ==========================================================
       // ALL CHECKS COMPLETED
@@ -341,37 +404,33 @@ export class AppComponent implements OnInit {
       next: (response) => {
 
 
-        /*
-          --------------------------------------------------------
-          SAVE INDIVIDUAL STATUS
-          --------------------------------------------------------
-        */
+        // --------------------------------------------------------
+        // SAVE INDIVIDUAL RESULTS
+        // --------------------------------------------------------
 
         this.flaskStatus = response.flask;
 
         this.djangoStatus = response.django;
 
-        this.dotnetStatus = response.dotnet;
-
         this.javaStatus = response.java;
 
+        this.dotnetStatus = response.dotnet;
 
-        /*
-          --------------------------------------------------------
-          DEBUG OUTPUT
-          --------------------------------------------------------
-        */
+
+        // --------------------------------------------------------
+        // CONSOLE OUTPUT
+        // --------------------------------------------------------
 
         console.log(
-          '================================================'
+          '=============================================='
         );
 
         console.log(
-          '        BACKEND SYSTEM STATUS'
+          '          BACKEND SYSTEM STATUS'
         );
 
         console.log(
-          '================================================'
+          '=============================================='
         );
 
         console.log(
@@ -395,7 +454,7 @@ export class AppComponent implements OnInit {
         );
 
         console.log(
-          '================================================'
+          '=============================================='
         );
 
 
@@ -416,10 +475,13 @@ export class AppComponent implements OnInit {
 
         if (allServicesRunning) {
 
-          /*
-            ALL FOUR services successfully responded.
 
-            Therefore the system is genuinely ready.
+          /*
+            All four backends responded successfully.
+
+            Therefore:
+
+              🟢 System Ready / Available
           */
 
           this.systemStatus =
@@ -430,7 +492,7 @@ export class AppComponent implements OnInit {
 
 
           console.log(
-            '🟢 SYSTEM READY - ALL BACKENDS AVAILABLE'
+            '🟢 ALL BACKENDS ARE AVAILABLE'
           );
 
         }
@@ -442,12 +504,13 @@ export class AppComponent implements OnInit {
 
         else {
 
+
           /*
             At least one backend failed.
 
-            We keep the overall status RED because it would be
-            misleading to show green when a required backend is
-            unavailable.
+            Therefore:
+
+              🔴 System Offline
           */
 
           this.systemStatus =
@@ -457,19 +520,14 @@ export class AppComponent implements OnInit {
             'red-status';
 
 
-          console.error(
-            '🔴 ONE OR MORE BACKENDS ARE NOT AVAILABLE'
-          );
-
-
           // ------------------------------------------------------
-          // Individual debugging
+          // INDIVIDUAL DEBUG INFORMATION
           // ------------------------------------------------------
 
           if (!this.flaskStatus) {
 
             console.error(
-              '❌ Flask is unavailable.'
+              '❌ Flask is DOWN'
             );
 
           }
@@ -478,7 +536,7 @@ export class AppComponent implements OnInit {
           if (!this.djangoStatus) {
 
             console.error(
-              '❌ Django is unavailable.'
+              '❌ Django is DOWN'
             );
 
           }
@@ -487,7 +545,7 @@ export class AppComponent implements OnInit {
           if (!this.javaStatus) {
 
             console.error(
-              '❌ Java is unavailable.'
+              '❌ Java is DOWN'
             );
 
           }
@@ -496,7 +554,7 @@ export class AppComponent implements OnInit {
           if (!this.dotnetStatus) {
 
             console.error(
-              '❌ .NET is unavailable.'
+              '❌ .NET is DOWN'
             );
 
           }
@@ -512,8 +570,9 @@ export class AppComponent implements OnInit {
 
       error: (error) => {
 
+
         console.error(
-          '❌ Unexpected system health-check error:',
+          '❌ Unexpected backend status error:',
           error
         );
 

@@ -1,46 +1,137 @@
 /*
-  ================================================================
+  ==================================================================
   APP COMPONENT
-  ================================================================
+  ==================================================================
 
-  PURPOSE
-  ---------------------------------------------------------------
+  DYNAMIC BACKEND HEALTH MONITORING
+  ------------------------------------------------------------------
 
-  This component:
+  BACKENDS:
 
-      1. Runs the Angular application.
-      2. Checks Flask.
-      3. Checks Django.
-      4. Checks Java Spring Boot.
-      5. Checks ASP.NET Core.
-      6. Detects every backend independently.
-      7. Shows LIVE runtime health.
-      8. Shows YELLOW while checking / waking.
-      9. Shows GREEN when UP.
-     10. Shows RED when DOWN.
-     11. Waits for ALL FOUR current health checks to finish.
-     12. Displays the final runtime system status.
-     13. Starts:
+      1. Flask
+      2. Django
+      3. Java Spring Boot
+      4. ASP.NET Core
 
-             5
-             4
-             3
-             2
-             1
+  ==================================================================
 
-     14. Automatically hides the popup.
-     15. Continues monitoring the backends.
-     16. Checks again after the monitoring interval.
-     17. Shows the popup again with the latest runtime status.
-     18. Cleans up timers and subscriptions when destroyed.
+  MAIN BEHAVIOR
+  ------------------------------------------------------------------
 
-  ================================================================
+  WHEN PAGE LOADS:
+
+      🟡 Checking / Waking Services...
+
+      Flask   🟡 WAKING...
+      Django  🟡 WAKING...
+      Java    🟡 WAKING...
+      .NET    🟡 WAKING...
+
+  Each API is checked independently.
+
+  Therefore the UI can become:
+
+      Flask   🟢 UP
+      Django  🟡 WAKING...
+      Java    🟢 UP
+      .NET    🔴 DOWN
+
+  WITHOUT waiting for the other APIs.
+
+  ==================================================================
+
+  IMPORTANT SUCCESS BEHAVIOR
+  ------------------------------------------------------------------
+
+  The popup does NOT hide when one API is DOWN.
+
+  It keeps monitoring.
+
+  Example:
+
+      🔴 System Offline / Degraded
+
+      Flask   🟢 UP
+      Django  🔴 DOWN
+      Java    🟢 UP
+      .NET    🟢 UP
+
+  Popup stays visible.
+
+  If Django later becomes UP:
+
+      Flask   🟢 UP
+      Django  🟢 UP
+      Java    🟢 UP
+      .NET    🟢 UP
+
+  Then immediately:
+
+      🟢 ALL SERVICES ARE LIVE!
+
+  And:
+
+      5
+      4
+      3
+      2
+      1
+
+  Then:
+
+      HIDE
+
+  ==================================================================
+
+  10-MINUTE SAFETY LIMIT
+  ------------------------------------------------------------------
+
+  There is a maximum monitoring window:
+
+      10 MINUTES
+
+  If all services never become healthy within that time:
+
+      Popup automatically hides.
+
+  This is ONLY the worst-case safety exit.
+
+  Normally, when all four become UP, the popup exits immediately
+  after the 5-second countdown.
+
+  ==================================================================
+
+  COUNTDOWN
+  ------------------------------------------------------------------
+
+      5 = RED
+      4 = ORANGE
+      3 = YELLOW
+      2 = GREEN
+      1 = BLUE
+
+  Every number blinks.
+
+  ==================================================================
+
+  IMPORTANT DESIGN DECISION
+  ------------------------------------------------------------------
+
+  We intentionally DO NOT use forkJoin().
+
+  forkJoin() waits for every observable before emitting.
+
+  Here we want LIVE runtime updates.
+
+  So each backend has its own subscription.
+
+  ==================================================================
 */
 
 
-// ================================================================
-// ANGULAR IMPORTS
-// ================================================================
+// ==================================================================
+// ANGULAR
+// ==================================================================
 
 import {
   ChangeDetectorRef,
@@ -50,18 +141,18 @@ import {
 } from '@angular/core';
 
 
-// ================================================================
+// ==================================================================
 // HTTP CLIENT
-// ================================================================
+// ==================================================================
 
 import {
   HttpClient
 } from '@angular/common/http';
 
 
-// ================================================================
+// ==================================================================
 // RXJS
-// ================================================================
+// ==================================================================
 
 import {
   Observable,
@@ -70,9 +161,9 @@ import {
 } from 'rxjs';
 
 
-// ================================================================
+// ==================================================================
 // RXJS OPERATORS
-// ================================================================
+// ==================================================================
 
 import {
   catchError,
@@ -83,14 +174,14 @@ import {
 
 
 
-// ================================================================
+// ==================================================================
 // BACKEND STATUS TYPE
-// ================================================================
+// ==================================================================
 
 /*
   null:
 
-      Backend has not responded yet.
+      The backend has not responded yet.
 
   true:
 
@@ -101,818 +192,71 @@ import {
       Backend is DOWN.
 */
 
-type BackendStatus = boolean | null;
+type BackendStatus =
+  boolean | null;
 
 
 
-// ================================================================
+// ==================================================================
 // COMPONENT
-// ================================================================
+// ==================================================================
 
 @Component({
 
-  // ==============================================================
-  // COMPONENT SELECTOR
-  // ==============================================================
+  // ----------------------------------------------------------------
+  // ROOT SELECTOR
+  // ----------------------------------------------------------------
 
   selector: 'app-root',
 
 
-  // ==============================================================
-  // HTML TEMPLATE
-  // ==============================================================
+  // ----------------------------------------------------------------
+  // HTML FILE
+  // ----------------------------------------------------------------
 
   templateUrl: './app.component.html',
 
 
-  // ==============================================================
-  // EXISTING CSS FILE
-  // ==============================================================
-
-  styleUrls: ['./app.component.css'],
-
-
-  // ==============================================================
-  // EXTRA POPUP CSS
-  // ==============================================================
-
-  /*
-    These styles are included here so the HTML popup works
-    immediately with this TypeScript file.
-
-    You can keep your existing app.component.css.
-
-    These component styles are specifically for:
-
-        traffic lights
-        popup
-        countdown
-        blinking
-        backend dots
-        mobile layout
-  */
-
-  styles: [`
-
-    /* ============================================================
-       SYSTEM STATUS POPUP
-       ============================================================ */
-
-    .system-status-popup {
-
-      position: fixed;
-
-      left: 20px;
-
-      bottom: 20px;
-
-      width: 330px;
-
-      padding: 20px;
-
-      border-radius: 18px;
-
-      color: #ffffff;
-
-      background: #111827;
-
-      border: 2px solid #374151;
-
-      box-shadow:
-        0 15px 40px rgba(0, 0, 0, 0.45);
-
-      z-index: 99999;
-
-      font-family:
-        Arial,
-        Helvetica,
-        sans-serif;
-
-      overflow: hidden;
-
-    }
-
-
-
-    /* ============================================================
-       GREEN OVERALL STATUS
-       ============================================================ */
-
-    .system-status-popup.green-status {
-
-      border-color: #22c55e;
-
-      box-shadow:
-        0 0 20px rgba(34, 197, 94, 0.35),
-        0 15px 40px rgba(0, 0, 0, 0.45);
-
-    }
-
-
-
-    /* ============================================================
-       YELLOW OVERALL STATUS
-       ============================================================ */
-
-    .system-status-popup.yellow-status {
-
-      border-color: #facc15;
-
-      box-shadow:
-        0 0 20px rgba(250, 204, 21, 0.35),
-        0 15px 40px rgba(0, 0, 0, 0.45);
-
-    }
-
-
-
-    /* ============================================================
-       RED OVERALL STATUS
-       ============================================================ */
-
-    .system-status-popup.red-status {
-
-      border-color: #ef4444;
-
-      box-shadow:
-        0 0 20px rgba(239, 68, 68, 0.35),
-        0 15px 40px rgba(0, 0, 0, 0.45);
-
-    }
-
-
-
-    /* ============================================================
-       HEADER
-       ============================================================ */
-
-    .system-status-header {
-
-      display: flex;
-
-      align-items: center;
-
-      gap: 12px;
-
-      margin-bottom: 8px;
-
-    }
-
-
-
-    /* ============================================================
-       TRAFFIC LIGHT CONTAINER
-       ============================================================ */
-
-    .traffic-lights {
-
-      display: flex;
-
-      align-items: center;
-
-      gap: 5px;
-
-      padding: 5px 7px;
-
-      border-radius: 20px;
-
-      background: #030712;
-
-      border: 1px solid #374151;
-
-    }
-
-
-
-    /* ============================================================
-       TRAFFIC LIGHT
-       ============================================================ */
-
-    .traffic-light {
-
-      display: inline-block;
-
-      width: 10px;
-
-      height: 10px;
-
-      border-radius: 50%;
-
-      opacity: 0.25;
-
-      transition:
-        opacity 0.25s ease,
-        box-shadow 0.25s ease,
-        transform 0.25s ease;
-
-    }
-
-
-
-    /* ============================================================
-       RED LIGHT
-       ============================================================ */
-
-    .red-light {
-
-      background: #ef4444;
-
-    }
-
-
-
-    /* ============================================================
-       YELLOW LIGHT
-       ============================================================ */
-
-    .yellow-light {
-
-      background: #facc15;
-
-    }
-
-
-
-    /* ============================================================
-       GREEN LIGHT
-       ============================================================ */
-
-    .green-light {
-
-      background: #22c55e;
-
-    }
-
-
-
-    /* ============================================================
-       ACTIVE TRAFFIC LIGHT
-       ============================================================ */
-
-    .traffic-light.light-active {
-
-      opacity: 1;
-
-      transform: scale(1.15);
-
-    }
-
-
-
-    .red-light.light-active {
-
-      box-shadow:
-        0 0 12px #ef4444;
-
-    }
-
-
-
-    .yellow-light.light-active {
-
-      box-shadow:
-        0 0 12px #facc15;
-
-    }
-
-
-
-    .green-light.light-active {
-
-      box-shadow:
-        0 0 12px #22c55e;
-
-    }
-
-
-
-    /* ============================================================
-       SYSTEM STATUS TITLE
-       ============================================================ */
-
-    .system-status-title {
-
-      flex: 1;
-
-      font-size: 17px;
-
-      font-weight: 800;
-
-      line-height: 1.2;
-
-    }
-
-
-
-    /* ============================================================
-       COUNTDOWN NUMBER
-       ============================================================ */
-
-    .countdown-number {
-
-      text-align: center;
-
-      font-size: 58px;
-
-      line-height: 1;
-
-      font-weight: 900;
-
-      margin-top: 10px;
-
-      margin-bottom: 2px;
-
-      text-shadow:
-        0 0 12px currentColor;
-
-      /*
-        Continuous blinking.
-
-        This gives the countdown a nice live effect.
-      */
-
-      animation:
-        countdownBlink
-        0.75s
-        ease-in-out
-        infinite;
-
-      user-select: none;
-
-    }
-
-
-
-    /* ============================================================
-       COUNTDOWN RED
-       ============================================================ */
-
-    .countdown-red {
-
-      color: #ef4444;
-
-    }
-
-
-
-    /* ============================================================
-       COUNTDOWN ORANGE
-       ============================================================ */
-
-    .countdown-orange {
-
-      color: #fb923c;
-
-    }
-
-
-
-    /* ============================================================
-       COUNTDOWN YELLOW
-       ============================================================ */
-
-    .countdown-yellow {
-
-      color: #facc15;
-
-    }
-
-
-
-    /* ============================================================
-       COUNTDOWN GREEN
-       ============================================================ */
-
-    .countdown-green {
-
-      color: #22c55e;
-
-    }
-
-
-
-    /* ============================================================
-       COUNTDOWN BLUE
-       ============================================================ */
-
-    .countdown-blue {
-
-      color: #38bdf8;
-
-    }
-
-
-
-    /* ============================================================
-       COUNTDOWN BLINK ANIMATION
-       ============================================================ */
-
-    @keyframes countdownBlink {
-
-      0% {
-
-        opacity: 1;
-
-        transform: scale(1);
-
-        filter: brightness(1);
-
-      }
-
-
-      35% {
-
-        opacity: 0.25;
-
-        transform: scale(0.92);
-
-        filter: brightness(0.8);
-
-      }
-
-
-      70% {
-
-        opacity: 1;
-
-        transform: scale(1.08);
-
-        filter: brightness(1.8);
-
-      }
-
-
-      100% {
-
-        opacity: 1;
-
-        transform: scale(1);
-
-        filter: brightness(1);
-
-      }
-
-    }
-
-
-
-    /* ============================================================
-       COUNTDOWN LABEL
-       ============================================================ */
-
-    .countdown-label {
-
-      text-align: center;
-
-      color: #9ca3af;
-
-      font-size: 12px;
-
-      margin-bottom: 15px;
-
-    }
-
-
-
-    /* ============================================================
-       STARTUP MESSAGE
-       ============================================================ */
-
-    .startup-message {
-
-      text-align: center;
-
-      color: #facc15;
-
-      font-size: 12px;
-
-      font-weight: 700;
-
-      margin-bottom: 12px;
-
-      animation:
-        softBlink
-        1.2s
-        ease-in-out
-        infinite;
-
-    }
-
-
-
-    /* ============================================================
-       SOFT BLINK
-       ============================================================ */
-
-    @keyframes softBlink {
-
-      0% {
-
-        opacity: 1;
-
-      }
-
-
-      50% {
-
-        opacity: 0.45;
-
-      }
-
-
-      100% {
-
-        opacity: 1;
-
-      }
-
-    }
-
-
-
-    /* ============================================================
-       BACKEND SERVICES TITLE
-       ============================================================ */
-
-    .system-status-subtitle {
-
-      color: #d1d5db;
-
-      font-size: 11px;
-
-      font-weight: 800;
-
-      text-transform: uppercase;
-
-      letter-spacing: 1px;
-
-      padding-bottom: 7px;
-
-      border-bottom: 1px solid #374151;
-
-      margin-bottom: 5px;
-
-    }
-
-
-
-    /* ============================================================
-       BACKEND ROW
-       ============================================================ */
-
-    .backend-status {
-
-      display: flex;
-
-      justify-content: space-between;
-
-      align-items: center;
-
-      min-height: 30px;
-
-      padding: 3px 0;
-
-      border-bottom:
-        1px solid rgba(75, 85, 99, 0.35);
-
-    }
-
-
-
-    /* ============================================================
-       BACKEND NAME
-       ============================================================ */
-
-    .backend-name {
-
-      display: flex;
-
-      align-items: center;
-
-      gap: 8px;
-
-      font-size: 14px;
-
-      font-weight: 700;
-
-    }
-
-
-
-    /* ============================================================
-       BACKEND DOT
-       ============================================================ */
-
-    .backend-dot {
-
-      width: 9px;
-
-      height: 9px;
-
-      border-radius: 50%;
-
-      display: inline-block;
-
-      transition:
-        background-color 0.25s ease,
-        box-shadow 0.25s ease;
-
-    }
-
-
-
-    /* ============================================================
-       GREEN BACKEND DOT
-       ============================================================ */
-
-    .dot-green {
-
-      background: #22c55e;
-
-      box-shadow:
-        0 0 9px #22c55e;
-
-    }
-
-
-
-    /* ============================================================
-       RED BACKEND DOT
-       ============================================================ */
-
-    .dot-red {
-
-      background: #ef4444;
-
-      box-shadow:
-        0 0 9px #ef4444;
-
-    }
-
-
-
-    /* ============================================================
-       YELLOW BACKEND DOT
-       ============================================================ */
-
-    .dot-yellow {
-
-      background: #facc15;
-
-      box-shadow:
-        0 0 9px #facc15;
-
-      animation:
-        dotBlink
-        0.9s
-        ease-in-out
-        infinite;
-
-    }
-
-
-
-    /* ============================================================
-       BACKEND DOT BLINK
-       ============================================================ */
-
-    @keyframes dotBlink {
-
-      0% {
-
-        opacity: 1;
-
-      }
-
-
-      50% {
-
-        opacity: 0.35;
-
-      }
-
-
-      100% {
-
-        opacity: 1;
-
-      }
-
-    }
-
-
-
-    /* ============================================================
-       BACKEND STATE
-       ============================================================ */
-
-    .backend-state {
-
-      font-size: 12px;
-
-      font-weight: 800;
-
-    }
-
-
-
-    /* ============================================================
-       RUNTIME SUMMARY
-       ============================================================ */
-
-    .runtime-summary {
-
-      display: flex;
-
-      justify-content: center;
-
-      gap: 5px;
-
-      color: #9ca3af;
-
-      font-size: 10px;
-
-      margin-top: 10px;
-
-    }
-
-
-
-    /* ============================================================
-       AUTO CLOSE MESSAGE
-       ============================================================ */
-
-    .status-hide-message {
-
-      text-align: center;
-
-      color: #6b7280;
-
-      font-size: 10px;
-
-      margin-top: 8px;
-
-    }
-
-
-
-    /* ============================================================
-       MOBILE
-       ============================================================ */
-
-    @media (max-width: 600px) {
-
-      .system-status-popup {
-
-        left: 10px;
-
-        right: 10px;
-
-        bottom: 10px;
-
-        width: auto;
-
-        max-width: none;
-
-      }
-
-    }
-
-  `]
+  // ----------------------------------------------------------------
+  // CSS FILE
+  // ----------------------------------------------------------------
+
+  styleUrls: ['./app.component.css']
 
 })
 
 
 
-// ================================================================
+// ==================================================================
 // APP COMPONENT CLASS
-// ================================================================
+// ==================================================================
 
 export class AppComponent
   implements OnInit, OnDestroy {
 
 
 
-  // ==============================================================
+  // ================================================================
   // APPLICATION TITLE
-  // ==============================================================
+  // ================================================================
 
-  title = 'Angular_Test_App';
+  title =
+    'Angular_Test_App';
 
 
 
-  // ==============================================================
+  // ================================================================
   // OVERALL SYSTEM STATUS
-  // ==============================================================
+  // ================================================================
 
   /*
-    Possible values:
+    Possible states:
 
         🟡 Checking / Waking Services...
 
-        🟢 System Ready / All Services Live
-
         🔴 System Offline / Degraded
+
+        🟢 System Ready / All Services Live
   */
 
   systemStatus =
@@ -920,12 +264,20 @@ export class AppComponent
 
 
 
+  // ================================================================
+  // OVERALL STATUS CSS CLASS
+  // ================================================================
+
   /*
-    CSS class:
+    Used by HTML:
+
+        [ngClass]="statusColor"
+
+    Possible values:
 
         yellow-status
-        green-status
         red-status
+        green-status
   */
 
   statusColor =
@@ -933,9 +285,9 @@ export class AppComponent
 
 
 
-  // ==============================================================
+  // ================================================================
   // POPUP VISIBILITY
-  // ==============================================================
+  // ================================================================
 
   /*
     TRUE:
@@ -947,38 +299,35 @@ export class AppComponent
         Popup is hidden.
   */
 
-  showSystemStatus = true;
+  showSystemStatus =
+    true;
 
 
 
-  // ==============================================================
+  // ================================================================
   // COUNTDOWN
-  // ==============================================================
+  // ================================================================
 
   /*
-    Starts at:
+    Final exit countdown:
 
         5
-
-    Then:
-
         4
         3
         2
         1
 
-    Then:
-
-        HIDE
+    Then popup hides.
   */
 
-  countdown = 5;
+  countdown =
+    5;
 
 
 
-  // ==============================================================
+  // ================================================================
   // COUNTDOWN COLOR
-  // ==============================================================
+  // ================================================================
 
   /*
     5 = RED
@@ -993,131 +342,136 @@ export class AppComponent
 
 
 
-  // ==============================================================
+  // ================================================================
   // COUNTDOWN RUNNING
-  // ==============================================================
+  // ================================================================
 
   /*
     FALSE:
 
-        We are waiting for backend responses.
+        We are still monitoring.
 
     TRUE:
 
-        5 -> 4 -> 3 -> 2 -> 1 is running.
+        The system is healthy and the final 5-4-3-2-1 exit is
+        running.
   */
 
-  countdownRunning = false;
+  countdownRunning =
+    false;
 
 
 
-  // ==============================================================
-  // BACKEND STATUS
-  // ==============================================================
+  // ================================================================
+  // FLASK STATUS
+  // ================================================================
 
   /*
-    null:
-
-        No result yet.
-
-    true:
-
-        UP.
-
-    false:
-
-        DOWN.
-
-  IMPORTANT:
-
-  We use null instead of false as the initial state.
-
-  This prevents an API that has not responded yet from being
-  incorrectly displayed as DOWN.
+    null = not responded yet
+    true = UP
+    false = DOWN
   */
 
-  flaskStatus: BackendStatus = null;
-
-  djangoStatus: BackendStatus = null;
-
-  javaStatus: BackendStatus = null;
-
-  dotnetStatus: BackendStatus = null;
+  flaskStatus:
+    BackendStatus = null;
 
 
 
-  // ==============================================================
-  // BACKEND CHECKING FLAGS
-  // ==============================================================
+  // ================================================================
+  // DJANGO STATUS
+  // ================================================================
 
-  /*
-    TRUE:
-
-        The HTTP request for that backend is currently running.
-
-    FALSE:
-
-        That backend request has finished.
-  */
-
-  flaskChecking = false;
-
-  djangoChecking = false;
-
-  javaChecking = false;
-
-  dotnetChecking = false;
+  djangoStatus:
+    BackendStatus = null;
 
 
 
-  // ==============================================================
+  // ================================================================
+  // JAVA STATUS
+  // ================================================================
+
+  javaStatus:
+    BackendStatus = null;
+
+
+
+  // ================================================================
+  // .NET STATUS
+  // ================================================================
+
+  dotnetStatus:
+    BackendStatus = null;
+
+
+
+  // ================================================================
   // FIRST RESPONSE FLAGS
-  // ==============================================================
+  // ================================================================
 
   /*
-    These remember whether each backend has completed its first
-    health check.
+    These tell us whether each backend has responded at least once
+    during the current monitoring session.
+
+    They are different from the actual status.
 
     Example:
 
-        Flask responds
+        Django responds DOWN.
 
-        flaskFirstResponse = true
+    Then:
 
-    This remains true for the lifetime of the component.
+        djangoFirstResponse = true
+
+        djangoStatus = false
   */
 
-  private flaskFirstResponse = false;
+  private flaskFirstResponse =
+    false;
 
-  private djangoFirstResponse = false;
+  private djangoFirstResponse =
+    false;
 
-  private javaFirstResponse = false;
+  private javaFirstResponse =
+    false;
 
-  private dotnetFirstResponse = false;
+  private dotnetFirstResponse =
+    false;
 
 
 
-  // ==============================================================
-  // INITIAL HEALTH CHECK COMPLETE
-  // ==============================================================
+  // ================================================================
+  // MONITORING STARTED
+  // ================================================================
 
   /*
-    FALSE:
-
-        At least one backend has never responded yet.
-
-    TRUE:
-
-        All four have responded at least once.
+    Used to make sure the 10-minute maximum timer starts only once.
   */
 
-  initialHealthCheckComplete = false;
+  private monitoringStarted =
+    false;
 
 
 
-  // ==============================================================
+  // ================================================================
+  // ALL SERVICES HAVE BEEN UP
+  // ================================================================
+
+  /*
+    TRUE:
+
+        All four services have simultaneously reported UP.
+
+    Once this becomes true, the final countdown starts.
+  */
+
+  private finalSuccessTriggered =
+    false;
+
+
+
+  // ================================================================
   // COUNTDOWN TIMER
-  // ==============================================================
+  // ================================================================
 
   /*
     Controls:
@@ -1134,29 +488,33 @@ export class AppComponent
 
 
 
-  // ==============================================================
-  // NEXT HEALTH CHECK TIMER
-  // ==============================================================
+  // ================================================================
+  // TEN-MINUTE SAFETY TIMER
+  // ================================================================
 
   /*
-    After the popup disappears, this timer waits before starting
-    another health-check cycle.
+    Worst-case safety timer.
+
+    If all services never become healthy:
+
+        10 minutes
+        ↓
+        popup hides
   */
 
-  private healthCheckTimer:
+  private maximumMonitoringTimer:
     ReturnType<typeof setTimeout> | null = null;
 
 
 
-  // ==============================================================
+  // ================================================================
   // ACTIVE HTTP SUBSCRIPTIONS
-  // ==============================================================
+  // ================================================================
 
   /*
-    Every backend request is stored here.
+    All backend subscriptions are stored here.
 
-    When the component is destroyed, all subscriptions are
-    cancelled.
+    They are cancelled when Angular destroys this component.
   */
 
   private activeSubscriptions:
@@ -1164,16 +522,18 @@ export class AppComponent
 
 
 
-  // ==============================================================
+  // ================================================================
   // API TIMEOUT
-  // ==============================================================
+  // ================================================================
 
   /*
-    Maximum time allowed for one health request.
+    Render services can sleep.
 
-    Render services can take time to wake up.
+    Give every API up to 20 seconds for an individual request.
 
-    20 seconds is allowed here.
+    If it still doesn't respond:
+
+        DOWN
   */
 
   private readonly API_TIMEOUT_MS =
@@ -1181,92 +541,39 @@ export class AppComponent
 
 
 
-  // ==============================================================
-  // HEALTH CHECK INTERVAL
-  // ==============================================================
+  // ================================================================
+  // MAXIMUM MONITORING TIME
+  // ================================================================
 
   /*
-    After one cycle:
+    10 minutes.
 
-        popup hides
+        10 minutes
+        ×
+        60 seconds
+        ×
+        1000 milliseconds
 
-    Then:
-
-        wait 30 seconds
-
-    Then:
-
-        check all APIs again.
-
-    You can change this:
-
-        15000 = 15 seconds
-
-        30000 = 30 seconds
-
-        60000 = 1 minute
+        = 600000 ms
   */
 
-  private readonly HEALTH_CHECK_INTERVAL_MS =
-    30000;
+  private readonly MAX_MONITORING_TIME_MS =
+    10 * 60 * 1000;
 
 
 
-  // ==============================================================
-  // COUNTDOWN LENGTH
-  // ==============================================================
+  // ================================================================
+  // COUNTDOWN START VALUE
+  // ================================================================
 
   private readonly COUNTDOWN_SECONDS =
     5;
 
 
 
-  // ==============================================================
-  // CURRENT HEALTH CHECK CYCLE
-  // ==============================================================
-
-  /*
-    TRUE:
-
-        A health-check cycle is currently running.
-
-    FALSE:
-
-        No health-check cycle is currently running.
-  */
-
-  private healthCheckCycleRunning =
-    false;
-
-
-
-  // ==============================================================
-  // COMPLETED REQUESTS IN CURRENT CYCLE
-  // ==============================================================
-
-  /*
-    Starts at:
-
-        0
-
-    Then:
-
-        1
-        2
-        3
-        4
-
-    Only when it reaches 4 does the countdown begin.
-  */
-
-  private completedRequestsInCycle =
-    0;
-
-
-
-  // ==============================================================
-  // DESTROYED FLAG
-  // ==============================================================
+  // ================================================================
+  // COMPONENT DESTROYED
+  // ================================================================
 
   /*
     Prevents asynchronous callbacks from modifying the component
@@ -1278,9 +585,9 @@ export class AppComponent
 
 
 
-  // ==============================================================
+  // ================================================================
   // CONSTRUCTOR
-  // ==============================================================
+  // ================================================================
 
   constructor(
 
@@ -1292,54 +599,48 @@ export class AppComponent
 
 
 
-  // ==============================================================
-  // COMPONENT INITIALIZATION
-  // ==============================================================
+  // ================================================================
+  // ANGULAR INITIALIZATION
+  // ================================================================
 
   ngOnInit(): void {
 
 
     /*
-      Start the FIRST health-check cycle immediately.
+      ==============================================================
+      START MONITORING
+      ==============================================================
 
-      The popup is visible immediately.
+      The popup is immediately visible.
 
-      All four APIs begin independently.
+      All APIs start independently.
     */
 
-    this.startHealthCheckCycle();
+    this.startMonitoring();
 
   }
 
 
 
-  // ==============================================================
-  // START HEALTH CHECK CYCLE
-  // ==============================================================
+  // ================================================================
+  // START MONITORING
+  // ================================================================
 
   /*
-    IMPORTANT:
+    This is the main startup method.
 
-    This method starts all four requests.
+    It performs two things:
 
-    It does NOT wait for one API before starting another.
-
-    Therefore:
-
-        Flask
-        Django
-        Java
-        .NET
-
-    all begin checking immediately.
+        1. Starts the 10-minute safety timer.
+        2. Starts all four backend checks.
   */
 
-  startHealthCheckCycle(): void {
+  private startMonitoring(): void {
 
 
-    // ============================================================
-    // DO NOT RUN AFTER DESTROY
-    // ============================================================
+    // ==============================================================
+    // SAFETY
+    // ==============================================================
 
     if (this.destroyed) {
 
@@ -1349,124 +650,63 @@ export class AppComponent
 
 
 
-    // ============================================================
-    // PREVENT OVERLAPPING CYCLES
-    // ============================================================
-
-    if (this.healthCheckCycleRunning) {
-
-      return;
-
-    }
-
-
-
-    // ============================================================
-    // MARK CYCLE AS RUNNING
-    // ============================================================
-
-    this.healthCheckCycleRunning =
-      true;
-
-
-
-    // ============================================================
-    // RESET COMPLETED REQUEST COUNT
-    // ============================================================
-
-    this.completedRequestsInCycle =
-      0;
-
-
-
-    // ============================================================
+    // ==============================================================
     // SHOW POPUP
-    // ============================================================
+    // ==============================================================
 
     this.showSystemStatus =
       true;
 
 
 
-    // ============================================================
-    // COUNTDOWN IS NOT RUNNING YET
-    // ============================================================
+    // ==============================================================
+    // RESET FINAL SUCCESS
+    // ==============================================================
 
-    /*
-      IMPORTANT:
-
-      We do NOT start 5 -> 4 -> 3 -> 2 -> 1 yet.
-
-      We wait until all four APIs finish.
-    */
-
-    this.countdownRunning =
+    this.finalSuccessTriggered =
       false;
 
 
 
-    // ============================================================
-    // RESET COUNTDOWN TO 5
-    // ============================================================
+    // ==============================================================
+    // RESET COUNTDOWN
+    // ==============================================================
 
     this.countdown =
       this.COUNTDOWN_SECONDS;
 
 
 
-    // ============================================================
-    // SET COUNTDOWN COLOR
-    // ============================================================
+    // ==============================================================
+    // COUNTDOWN NOT RUNNING YET
+    // ==============================================================
+
+    this.countdownRunning =
+      false;
+
+
+
+    // ==============================================================
+    // RESET COUNTDOWN COLOR
+    // ==============================================================
 
     this.updateCountdownColor();
 
 
 
-    // ============================================================
-    // MARK ALL BACKENDS AS CHECKING
-    // ============================================================
+    // ==============================================================
+    // START TEN-MINUTE SAFETY TIMER
+    // ==============================================================
 
-    this.flaskChecking =
-      true;
-
-    this.djangoChecking =
-      true;
-
-    this.javaChecking =
-      true;
-
-    this.dotnetChecking =
-      true;
+    this.startMaximumMonitoringTimer();
 
 
 
-    // ============================================================
-    // UPDATE OVERALL STATUS
-    // ============================================================
+    // ==============================================================
+    // START FLASK
+    // ==============================================================
 
-    /*
-      Since all four requests are currently running:
-
-          🟡 Checking / Waking Services...
-    */
-
-    this.updateOverallSystemStatus();
-
-
-
-    // ============================================================
-    // REFRESH VIEW
-    // ============================================================
-
-    this.refreshView();
-
-
-
-    // ============================================================
-    // FLASK
-    // ============================================================
-
-    this.runBackendCheck(
+    this.checkBackend(
 
       'flask',
 
@@ -1478,11 +718,11 @@ export class AppComponent
 
 
 
-    // ============================================================
-    // DJANGO
-    // ============================================================
+    // ==============================================================
+    // START DJANGO
+    // ==============================================================
 
-    this.runBackendCheck(
+    this.checkBackend(
 
       'django',
 
@@ -1494,11 +734,27 @@ export class AppComponent
 
 
 
-    // ============================================================
-    // .NET
-    // ============================================================
+    // ==============================================================
+    // START JAVA
+    // ==============================================================
 
-    this.runBackendCheck(
+    this.checkBackend(
+
+      'java',
+
+      'Java',
+
+      'https://java-springboot-user-backend.onrender.com/api/users'
+
+    );
+
+
+
+    // ==============================================================
+    // START .NET
+    // ==============================================================
+
+    this.checkBackend(
 
       'dotnet',
 
@@ -1510,44 +766,191 @@ export class AppComponent
 
 
 
-    // ============================================================
-    // JAVA
-    // ============================================================
+    // ==============================================================
+    // INITIAL UI REFRESH
+    // ==============================================================
 
-    this.runBackendCheck(
-
-      'java',
-
-      'Java',
-
-      'https://java-springboot-user-backend.onrender.com/api/users'
-
-    );
+    this.refreshView();
 
   }
 
 
 
-  // ==============================================================
-  // RUN INDIVIDUAL BACKEND CHECK
-  // ==============================================================
+  // ================================================================
+  // START MAXIMUM 10-MINUTE TIMER
+  // ================================================================
 
   /*
-    This is the main dynamic part.
+    IMPORTANT:
 
-    We DO NOT use forkJoin().
+    This timer is NOT the normal exit timer.
 
-    Instead:
+    It is only the emergency/safety exit.
 
-        Flask -> independent subscription
-        Django -> independent subscription
-        Java -> independent subscription
-        .NET -> independent subscription
+    Normal flow:
 
-    Therefore responses are displayed as soon as they arrive.
+        all 4 UP
+        ↓
+        5
+        4
+        3
+        2
+        1
+        ↓
+        hide
+
+    Worst-case flow:
+
+        something remains DOWN / never responds
+        ↓
+        wait
+        ↓
+        10 minutes reached
+        ↓
+        hide
   */
 
-  private runBackendCheck(
+  private startMaximumMonitoringTimer(): void {
+
+
+    // ==============================================================
+    // DO NOT START TWICE
+    // ==============================================================
+
+    if (this.monitoringStarted) {
+
+      return;
+
+    }
+
+
+
+    // ==============================================================
+    // MARK STARTED
+    // ==============================================================
+
+    this.monitoringStarted =
+      true;
+
+
+
+    // ==============================================================
+    // CREATE 10-MINUTE TIMER
+    // ==============================================================
+
+    this.maximumMonitoringTimer =
+
+      setTimeout(() => {
+
+
+        // ==========================================================
+        // COMPONENT DESTROYED
+        // ==========================================================
+
+        if (this.destroyed) {
+
+          return;
+
+        }
+
+
+
+        // ==========================================================
+        // IF FINAL SUCCESS ALREADY HAPPENED
+        // ==========================================================
+
+        /*
+          If all services already became UP, the normal countdown
+          should handle the popup.
+
+          Therefore the 10-minute timer does nothing.
+        */
+
+        if (this.finalSuccessTriggered) {
+
+          return;
+
+        }
+
+
+
+        // ==========================================================
+        // TEN MINUTES REACHED
+        // ==========================================================
+
+        console.warn(
+
+          '⏰ Maximum 10-minute monitoring window reached.'
+
+        );
+
+
+
+        // ==========================================================
+        // UPDATE FINAL STATUS MESSAGE
+        // ==========================================================
+
+        this.systemStatus =
+          '🔴 Monitoring timeout reached';
+
+
+
+        this.statusColor =
+          'red-status';
+
+
+
+        // ==========================================================
+        // STOP ANY COUNTDOWN
+        // ==========================================================
+
+        this.stopCountdown();
+
+
+
+        // ==========================================================
+        // HIDE POPUP
+        // ==========================================================
+
+        this.showSystemStatus =
+          false;
+
+
+
+        // ==========================================================
+        // REFRESH UI
+        // ==========================================================
+
+        this.refreshView();
+
+
+      }, this.MAX_MONITORING_TIME_MS);
+
+  }
+
+
+
+  // ================================================================
+  // CHECK INDIVIDUAL BACKEND
+  // ================================================================
+
+  /*
+    Each backend gets its own independent request.
+
+    This means:
+
+        Flask can respond first.
+
+        Java can respond second.
+
+        Django can respond later.
+
+        .NET can respond last.
+
+    The UI updates after each response.
+  */
+
+  private checkBackend(
 
     backend:
       'flask' |
@@ -1562,9 +965,21 @@ export class AppComponent
   ): void {
 
 
-    // ============================================================
-    // CREATE REQUEST
-    // ============================================================
+    // ==============================================================
+    // SAFETY
+    // ==============================================================
+
+    if (this.destroyed) {
+
+      return;
+
+    }
+
+
+
+    // ==============================================================
+    // START REQUEST
+    // ==============================================================
 
     const request$ =
       this.checkApi(
@@ -1577,25 +992,23 @@ export class AppComponent
 
 
 
-    // ============================================================
+    // ==============================================================
     // SUBSCRIBE
-    // ============================================================
+    // ==============================================================
 
     const subscription =
       request$.subscribe({
 
-        // ========================================================
-        // RESPONSE RECEIVED
-        // ========================================================
+        // ==========================================================
+        // RESPONSE
+        // ==========================================================
 
         next: (isUp: boolean) => {
 
 
-          /*
-            Store the result immediately.
-
-            We DO NOT wait for the other APIs.
-          */
+          // ========================================================
+          // STORE RESULT
+          // ========================================================
 
           this.setBackendStatus(
 
@@ -1607,9 +1020,9 @@ export class AppComponent
 
 
 
-          /*
-            Remember that this backend has responded at least once.
-          */
+          // ========================================================
+          // MARK FIRST RESPONSE
+          // ========================================================
 
           this.markFirstResponse(
 
@@ -1619,33 +1032,41 @@ export class AppComponent
 
 
 
-          /*
-            Update overall traffic-light state immediately.
-          */
+          // ========================================================
+          // UPDATE OVERALL STATUS
+          // ========================================================
 
           this.updateOverallSystemStatus();
 
 
 
-          /*
-            Refresh the Angular UI immediately.
-          */
+          // ========================================================
+          // CHECK WHETHER ALL FOUR ARE NOW UP
+          // ========================================================
+
+          this.checkForAllServicesLive();
+
+
+
+          // ========================================================
+          // UPDATE UI
+          // ========================================================
 
           this.refreshView();
 
 
 
-          /*
-            Debug output.
-          */
+          // ========================================================
+          // CONSOLE
+          // ========================================================
 
           console.log(
 
-            `Runtime status -> ${serviceName}:`,
+            `Runtime Health → ${serviceName}:`,
 
             isUp
-              ? 'UP'
-              : 'DOWN'
+              ? '🟢 UP'
+              : '🔴 DOWN'
 
           );
 
@@ -1653,22 +1074,16 @@ export class AppComponent
 
 
 
-        // ========================================================
+        // ==========================================================
         // UNEXPECTED ERROR
-        // ========================================================
+        // ==========================================================
 
         error: (error) => {
 
 
-          /*
-            Normally checkApi() catches errors.
-
-            This is an additional safety fallback.
-          */
-
           console.error(
 
-            `Unexpected ${serviceName} health-check error:`,
+            `Unexpected ${serviceName} health error:`,
 
             error
 
@@ -1676,9 +1091,9 @@ export class AppComponent
 
 
 
-          /*
-            Treat unexpected error as DOWN.
-          */
+          // --------------------------------------------------------
+          // TREAT ERROR AS DOWN
+          // --------------------------------------------------------
 
           this.setBackendStatus(
 
@@ -1690,9 +1105,9 @@ export class AppComponent
 
 
 
-          /*
-            Mark as responded.
-          */
+          // --------------------------------------------------------
+          // MARK AS RESPONDED
+          // --------------------------------------------------------
 
           this.markFirstResponse(
 
@@ -1702,17 +1117,25 @@ export class AppComponent
 
 
 
-          /*
-            Update overall status.
-          */
+          // --------------------------------------------------------
+          // UPDATE STATUS
+          // --------------------------------------------------------
 
           this.updateOverallSystemStatus();
 
 
 
-          /*
-            Refresh UI.
-          */
+          // --------------------------------------------------------
+          // CHECK ALL LIVE
+          // --------------------------------------------------------
+
+          this.checkForAllServicesLive();
+
+
+
+          // --------------------------------------------------------
+          // REFRESH UI
+          // --------------------------------------------------------
 
           this.refreshView();
 
@@ -1722,9 +1145,9 @@ export class AppComponent
 
 
 
-    // ============================================================
+    // ==============================================================
     // STORE SUBSCRIPTION
-    // ============================================================
+    // ==============================================================
 
     this.activeSubscriptions.push(
 
@@ -1736,27 +1159,24 @@ export class AppComponent
 
 
 
-  // ==============================================================
-  // GENERIC API HEALTH CHECK
-  // ==============================================================
+  // ================================================================
+  // GENERIC API CHECK
+  // ================================================================
 
   /*
-    SUCCESS:
+    Every API:
 
-        true
+        SUCCESS
+            ↓
+          true
 
-    ERROR:
+        ERROR
+            ↓
+          false
 
-        false
-
-    TIMEOUT:
-
-        false
-
-    Every request eventually completes.
-
-    That is important because the countdown should NEVER wait
-    forever for a backend that has completely stopped responding.
+        TIMEOUT
+            ↓
+          false
   */
 
   private checkApi(
@@ -1777,9 +1197,9 @@ export class AppComponent
         {
 
           /*
-            We only care whether the endpoint responds.
+            We only care whether the API responds.
 
-            Therefore the response body is treated as text.
+            The actual response body is irrelevant.
           */
 
           responseType: 'text'
@@ -1791,13 +1211,9 @@ export class AppComponent
       .pipe(
 
 
-        // ========================================================
-        // TIMEOUT
-        // ========================================================
-
-        /*
-          Give Render up to 20 seconds to wake/respond.
-        */
+        // ==========================================================
+        // 20-SECOND REQUEST TIMEOUT
+        // ==========================================================
 
         timeout(
 
@@ -1807,16 +1223,16 @@ export class AppComponent
 
 
 
-        // ========================================================
+        // ==========================================================
         // SUCCESS
-        // ========================================================
+        // ==========================================================
 
         map(() => {
 
 
           console.log(
 
-            `🟢 ${serviceName} responded successfully`,
+            `🟢 ${serviceName} responded successfully.`,
 
             url
 
@@ -1830,28 +1246,16 @@ export class AppComponent
 
 
 
-        // ========================================================
+        // ==========================================================
         // ERROR
-        // ========================================================
+        // ==========================================================
 
         catchError((error) => {
 
 
-          /*
-            This catches:
-
-                network errors
-                CORS errors
-                404
-                500
-                timeout
-                connection errors
-                etc.
-          */
-
           console.error(
 
-            `🔴 ${serviceName} health check failed`,
+            `🔴 ${serviceName} health check failed.`,
 
             url,
 
@@ -1862,9 +1266,9 @@ export class AppComponent
 
 
           /*
-            For health monitoring:
+            Any failure means:
 
-                ERROR = DOWN
+                DOWN
           */
 
           return of(false);
@@ -1873,24 +1277,29 @@ export class AppComponent
 
 
 
-        // ========================================================
+        // ==========================================================
         // FINALIZE
-        // ========================================================
+        // ==========================================================
 
         /*
-          finalize() executes after:
+          finalize() is useful for cleanup.
 
-              SUCCESS
-              ERROR
-              UNSUBSCRIBE
+          It runs whether the request:
 
-          We use it to count completed requests.
+              succeeds
+              fails
+              times out
+              gets unsubscribed
         */
 
         finalize(() => {
 
 
-          this.backendRequestFinished();
+          console.log(
+
+            `Health request finished → ${serviceName}`
+
+          );
 
         })
 
@@ -1900,260 +1309,9 @@ export class AppComponent
 
 
 
-  // ==============================================================
-  // BACKEND REQUEST FINISHED
-  // ==============================================================
-
-  /*
-    This runs independently.
-
-    Example:
-
-        Flask finishes first.
-
-        completedRequestsInCycle = 1
-
-
-        Django finishes.
-
-        completedRequestsInCycle = 2
-
-
-        Java finishes.
-
-        completedRequestsInCycle = 3
-
-
-        .NET finishes.
-
-        completedRequestsInCycle = 4
-
-
-    ONLY at 4:
-
-        countdown starts.
-  */
-
-  private backendRequestFinished(): void {
-
-
-    // ============================================================
-    // DO NOTHING AFTER DESTROY
-    // ============================================================
-
-    if (this.destroyed) {
-
-      return;
-
-    }
-
-
-
-    // ============================================================
-    // INCREMENT COMPLETED REQUEST COUNT
-    // ============================================================
-
-    this.completedRequestsInCycle++;
-
-
-
-    // ============================================================
-    // UPDATE CURRENT OVERALL STATUS
-    // ============================================================
-
-    this.updateOverallSystemStatus();
-
-
-
-    // ============================================================
-    // REFRESH UI
-    // ============================================================
-
-    this.refreshView();
-
-
-
-    // ============================================================
-    // STILL WAITING FOR OTHER BACKENDS
-    // ============================================================
-
-    if (
-
-      this.completedRequestsInCycle < 4
-
-    ) {
-
-
-      /*
-        IMPORTANT:
-
-        DO NOT HIDE.
-
-        DO NOT START COUNTDOWN.
-
-        Keep popup visible.
-
-        Keep showing current runtime states.
-
-        Example:
-
-            Flask   🟢 UP
-            Django  🟢 UP
-            Java    🟡 CHECKING
-            .NET    🟡 CHECKING
-
-        The popup stays open.
-      */
-
-      return;
-
-    }
-
-
-
-    // ============================================================
-    // ALL FOUR FINISHED
-    // ============================================================
-
-    this.healthCheckCycleRunning =
-      false;
-
-
-
-    // ============================================================
-    // INITIAL CHECK COMPLETE
-    // ============================================================
-
-    this.initialHealthCheckComplete =
-
-      this.flaskFirstResponse &&
-
-      this.djangoFirstResponse &&
-
-      this.javaFirstResponse &&
-
-      this.dotnetFirstResponse;
-
-
-
-    // ============================================================
-    // CALCULATE FINAL SYSTEM STATUS
-    // ============================================================
-
-    this.updateOverallSystemStatus();
-
-
-
-    // ============================================================
-    // REFRESH BEFORE COUNTDOWN
-    // ============================================================
-
-    this.refreshView();
-
-
-
-    // ============================================================
-    // START 5-SECOND COUNTDOWN
-    // ============================================================
-
-    this.startFinalCountdown();
-
-  }
-
-
-
-  // ==============================================================
-  // MARK FIRST RESPONSE
-  // ==============================================================
-
-  /*
-    Once a backend responds for the first time:
-
-        firstResponse = true
-
-    This is used to know whether the initial startup check has
-    completed.
-  */
-
-  private markFirstResponse(
-
-    backend:
-      'flask' |
-      'django' |
-      'java' |
-      'dotnet'
-
-  ): void {
-
-
-    switch (backend) {
-
-
-      // ========================================================
-      // FLASK
-      // ========================================================
-
-      case 'flask':
-
-        this.flaskFirstResponse =
-          true;
-
-        break;
-
-
-
-      // ========================================================
-      // DJANGO
-      // ========================================================
-
-      case 'django':
-
-        this.djangoFirstResponse =
-          true;
-
-        break;
-
-
-
-      // ========================================================
-      // JAVA
-      // ========================================================
-
-      case 'java':
-
-        this.javaFirstResponse =
-          true;
-
-        break;
-
-
-
-      // ========================================================
-      // .NET
-      // ========================================================
-
-      case 'dotnet':
-
-        this.dotnetFirstResponse =
-          true;
-
-        break;
-
-    }
-
-  }
-
-
-
-  // ==============================================================
+  // ================================================================
   // SET BACKEND STATUS
-  // ==============================================================
-
-  /*
-    Stores the latest runtime result.
-
-    It also marks the backend request as no longer checking.
-  */
+  // ================================================================
 
   private setBackendStatus(
 
@@ -2171,65 +1329,53 @@ export class AppComponent
     switch (backend) {
 
 
-      // ========================================================
+      // ============================================================
       // FLASK
-      // ========================================================
+      // ============================================================
 
       case 'flask':
 
         this.flaskStatus =
           status;
 
-        this.flaskChecking =
-          false;
-
         break;
 
 
 
-      // ========================================================
+      // ============================================================
       // DJANGO
-      // ========================================================
+      // ============================================================
 
       case 'django':
 
         this.djangoStatus =
           status;
 
-        this.djangoChecking =
-          false;
-
         break;
 
 
 
-      // ========================================================
+      // ============================================================
       // JAVA
-      // ========================================================
+      // ============================================================
 
       case 'java':
 
         this.javaStatus =
           status;
 
-        this.javaChecking =
-          false;
-
         break;
 
 
 
-      // ========================================================
+      // ============================================================
       // .NET
-      // ========================================================
+      // ============================================================
 
       case 'dotnet':
 
         this.dotnetStatus =
           status;
-
-        this.dotnetChecking =
-          false;
 
         break;
 
@@ -2239,85 +1385,126 @@ export class AppComponent
 
 
 
-  // ==============================================================
+  // ================================================================
+  // MARK FIRST RESPONSE
+  // ================================================================
+
+  private markFirstResponse(
+
+    backend:
+      'flask' |
+      'django' |
+      'java' |
+      'dotnet'
+
+  ): void {
+
+
+    switch (backend) {
+
+
+      // ============================================================
+      // FLASK
+      // ============================================================
+
+      case 'flask':
+
+        this.flaskFirstResponse =
+          true;
+
+        break;
+
+
+
+      // ============================================================
+      // DJANGO
+      // ============================================================
+
+      case 'django':
+
+        this.djangoFirstResponse =
+          true;
+
+        break;
+
+
+
+      // ============================================================
+      // JAVA
+      // ============================================================
+
+      case 'java':
+
+        this.javaFirstResponse =
+          true;
+
+        break;
+
+
+
+      // ============================================================
+      // .NET
+      // ============================================================
+
+      case 'dotnet':
+
+        this.dotnetFirstResponse =
+          true;
+
+        break;
+
+    }
+
+  }
+
+
+
+  // ================================================================
   // UPDATE OVERALL SYSTEM STATUS
-  // ==============================================================
+  // ================================================================
 
   /*
-    TRAFFIC-LIGHT RULES
-    --------------------------------------------------------------
+    This method controls the main traffic-light state.
 
-    YELLOW:
+    ---------------------------------------------------------------
 
-        One or more APIs are still checking.
+    YELLOW
 
-    RED:
+      If one or more APIs have not responded yet.
 
-        All current requests finished AND at least one backend
-        is DOWN.
+    ---------------------------------------------------------------
 
-    GREEN:
+    RED
 
-        All current requests finished AND all four backends are UP.
+      If all four have responded and at least one is DOWN.
 
-    This means the status changes dynamically while the requests
-    are actually running.
+    ---------------------------------------------------------------
+
+    GREEN
+
+      If all four are UP.
+
+    ---------------------------------------------------------------
+
+    IMPORTANT:
+
+      RED DOES NOT HIDE THE POPUP.
+
+      It stays visible until:
+
+          all four become UP
+
+      OR:
+
+          10-minute safety timeout.
   */
 
   private updateOverallSystemStatus(): void {
 
 
-    // ============================================================
-    // IS ANY BACKEND CURRENTLY CHECKING?
-    // ============================================================
-
-    const anyChecking =
-
-      this.flaskChecking ||
-
-      this.djangoChecking ||
-
-      this.javaChecking ||
-
-      this.dotnetChecking;
-
-
-
-    // ============================================================
-    // HAS ANY BACKEND DEFINITELY FAILED?
-    // ============================================================
-
-    const anyKnownDown =
-
-      this.flaskStatus === false ||
-
-      this.djangoStatus === false ||
-
-      this.javaStatus === false ||
-
-      this.dotnetStatus === false;
-
-
-
-    // ============================================================
-    // ARE ALL FOUR DEFINITELY UP?
-    // ============================================================
-
-    const allKnownUp =
-
-      this.flaskStatus === true &&
-
-      this.djangoStatus === true &&
-
-      this.javaStatus === true &&
-
-      this.dotnetStatus === true;
-
-
-
-    // ============================================================
-    // HAVE ALL FOUR RESPONDED AT LEAST ONCE?
-    // ============================================================
+    // ==============================================================
+    // CHECK WHETHER ALL FOUR HAVE RESPONDED
+    // ==============================================================
 
     const allResponded =
 
@@ -2331,32 +1518,56 @@ export class AppComponent
 
 
 
-    // ============================================================
+    // ==============================================================
+    // CHECK WHETHER ALL FOUR ARE UP
+    // ==============================================================
+
+    const allUp =
+
+      this.flaskStatus === true &&
+
+      this.djangoStatus === true &&
+
+      this.javaStatus === true &&
+
+      this.dotnetStatus === true;
+
+
+
+    // ==============================================================
+    // CHECK WHETHER ANY SERVICE IS DOWN
+    // ==============================================================
+
+    const anyDown =
+
+      this.flaskStatus === false ||
+
+      this.djangoStatus === false ||
+
+      this.javaStatus === false ||
+
+      this.dotnetStatus === false;
+
+
+
+    // ==============================================================
     // YELLOW
-    // ============================================================
+    // ==============================================================
 
     /*
-      If any backend is still checking:
+      If at least one backend hasn't responded yet:
 
           🟡 Checking / Waking Services...
     */
 
-    if (
-
-      anyChecking ||
-
-      !allResponded
-
-    ) {
+    if (!allResponded) {
 
 
       this.systemStatus =
-
         '🟡 Checking / Waking Services...';
 
 
       this.statusColor =
-
         'yellow-status';
 
 
@@ -2366,26 +1577,26 @@ export class AppComponent
 
 
 
-    // ============================================================
+    // ==============================================================
     // RED
-    // ============================================================
+    // ==============================================================
 
     /*
-      At least one backend is DOWN.
+      All four responded but something is DOWN:
 
           🔴 System Offline / Degraded
+
+      KEEP POPUP OPEN.
     */
 
-    if (anyKnownDown) {
+    if (anyDown) {
 
 
       this.systemStatus =
-
         '🔴 System Offline / Degraded';
 
 
       this.statusColor =
-
         'red-status';
 
 
@@ -2395,9 +1606,9 @@ export class AppComponent
 
 
 
-    // ============================================================
+    // ==============================================================
     // GREEN
-    // ============================================================
+    // ==============================================================
 
     /*
       All four are UP.
@@ -2405,16 +1616,14 @@ export class AppComponent
           🟢 System Ready / All Services Live
     */
 
-    if (allKnownUp) {
+    if (allUp) {
 
 
       this.systemStatus =
-
         '🟢 System Ready / All Services Live';
 
 
       this.statusColor =
-
         'green-status';
 
 
@@ -2424,109 +1633,274 @@ export class AppComponent
 
 
 
-    // ============================================================
+    // ==============================================================
     // SAFETY FALLBACK
-    // ============================================================
+    // ==============================================================
 
     this.systemStatus =
-
-      '🟡 Checking System...';
+      '🟡 Checking / Waking Services...';
 
 
     this.statusColor =
-
       'yellow-status';
 
   }
 
 
 
-  // ==============================================================
-  // START FINAL COUNTDOWN
-  // ==============================================================
+  // ================================================================
+  // CHECK FOR ALL SERVICES LIVE
+  // ================================================================
 
   /*
-    IMPORTANT:
+    THIS IS THE MOST IMPORTANT METHOD.
 
-    This method ONLY runs after all four APIs in the current
-    health-check cycle have completed.
+    Every time ANY backend responds, this method runs.
 
-    Sequence:
+    Example:
 
-        5
-        4
-        3
-        2
-        1
-        HIDE
+        Flask  = true
+        Django = false
+        Java   = true
+        .NET   = true
+
+        -> nothing happens.
+
+    Later Django becomes true:
+
+        Flask  = true
+        Django = true
+        Java   = true
+        .NET   = true
+
+        -> immediately start final countdown.
+  */
+
+  private checkForAllServicesLive(): void {
+
+
+    // ==============================================================
+    // DO NOTHING IF DESTROYED
+    // ==============================================================
+
+    if (this.destroyed) {
+
+      return;
+
+    }
+
+
+
+    // ==============================================================
+    // DO NOT RUN TWICE
+    // ==============================================================
+
+    if (this.finalSuccessTriggered) {
+
+      return;
+
+    }
+
+
+
+    // ==============================================================
+    // CHECK ALL FOUR
+    // ==============================================================
+
+    const allServicesUp =
+
+      this.flaskStatus === true &&
+
+      this.djangoStatus === true &&
+
+      this.javaStatus === true &&
+
+      this.dotnetStatus === true;
+
+
+
+    // ==============================================================
+    // NOT ALL UP YET
+    // ==============================================================
+
+    if (!allServicesUp) {
+
+      return;
+
+    }
+
+
+
+    // ==============================================================
+    // ALL FOUR ARE LIVE
+    // ==============================================================
+
+    console.log(
+
+      '================================================'
+
+    );
+
+    console.log(
+
+      '🟢🟢🟢 ALL FOUR BACKENDS ARE LIVE 🟢🟢🟢'
+
+    );
+
+    console.log(
+
+      '================================================'
+
+    );
+
+
+
+    // ==============================================================
+    // MARK SUCCESS
+    // ==============================================================
+
+    this.finalSuccessTriggered =
+      true;
+
+
+
+    // ==============================================================
+    // UPDATE GREEN STATUS
+    // ==============================================================
+
+    this.systemStatus =
+      '🟢 System Ready / All Services Live';
+
+
+    this.statusColor =
+      'green-status';
+
+
+
+    // ==============================================================
+    // STOP 10-MINUTE SAFETY TIMER
+    // ==============================================================
+
+    /*
+      We don't need the emergency timeout anymore.
+
+      The normal 5-4-3-2-1 countdown is now in control.
+    */
+
+    this.stopMaximumMonitoringTimer();
+
+
+
+    // ==============================================================
+    // START FINAL COUNTDOWN
+    // ==============================================================
+
+    this.startFinalCountdown();
+
+
+
+    // ==============================================================
+    // REFRESH UI
+    // ==============================================================
+
+    this.refreshView();
+
+  }
+
+
+
+  // ================================================================
+  // START FINAL COUNTDOWN
+  // ================================================================
+
+  /*
+    NORMAL SUCCESS EXIT:
+
+        ALL FOUR UP
+             ↓
+        🟢 ALL LIVE
+             ↓
+             5
+             ↓
+             4
+             ↓
+             3
+             ↓
+             2
+             ↓
+             1
+             ↓
+           HIDE
+
+    The countdown starts immediately when all four are UP.
   */
 
   private startFinalCountdown(): void {
 
 
-    // ============================================================
-    // STOP ANY OLD COUNTDOWN
-    // ============================================================
+    // ==============================================================
+    // STOP ANY EXISTING COUNTDOWN
+    // ==============================================================
 
     this.stopCountdown();
 
 
 
-    // ============================================================
+    // ==============================================================
     // SHOW POPUP
-    // ============================================================
+    // ==============================================================
 
     this.showSystemStatus =
       true;
 
 
 
-    // ============================================================
-    // RESET TO 5
-    // ============================================================
+    // ==============================================================
+    // SET COUNTDOWN TO 5
+    // ==============================================================
 
     this.countdown =
       this.COUNTDOWN_SECONDS;
 
 
 
-    // ============================================================
-    // COUNTDOWN IS RUNNING
-    // ============================================================
+    // ==============================================================
+    // ENABLE COUNTDOWN
+    // ==============================================================
 
     this.countdownRunning =
       true;
 
 
 
-    // ============================================================
-    // SET COLOR FOR 5
-    // ============================================================
+    // ==============================================================
+    // SET 5 COLOR
+    // ==============================================================
 
     this.updateCountdownColor();
 
 
 
-    // ============================================================
-    // REFRESH UI
-    // ============================================================
+    // ==============================================================
+    // REFRESH
+    // ==============================================================
 
     this.refreshView();
 
 
 
-    // ============================================================
-    // START ONE-SECOND TIMER
-    // ============================================================
+    // ==============================================================
+    // START TIMER
+    // ==============================================================
 
     this.countdownTimer =
 
       setInterval(() => {
 
 
-        // ========================================================
+        // ==========================================================
         // COMPONENT DESTROYED
-        // ========================================================
+        // ==========================================================
 
         if (this.destroyed) {
 
@@ -2540,74 +1914,69 @@ export class AppComponent
 
 
 
-        // ========================================================
-        // DECREASE NUMBER
-        // ========================================================
+        // ==========================================================
+        // DECREASE
+        // ==========================================================
 
         this.countdown--;
 
 
 
-        // ========================================================
-        // FINISHED
-        // ========================================================
+        // ==========================================================
+        // COUNTDOWN FINISHED
+        // ==========================================================
 
-        if (
-
-          this.countdown <= 0
-
-        ) {
+        if (this.countdown <= 0) {
 
 
-          // ------------------------------------------------------
+          // --------------------------------------------------------
           // STOP TIMER
-          // ------------------------------------------------------
+          // --------------------------------------------------------
 
           this.stopCountdown();
 
 
 
-          // ------------------------------------------------------
-          // KEEP INTERNAL VALUE AT ZERO
-          // ------------------------------------------------------
-
-          this.countdown =
-            0;
-
-
-
-          // ------------------------------------------------------
-          // COUNTDOWN STOPPED
-          // ------------------------------------------------------
+          // --------------------------------------------------------
+          // COUNTDOWN OFF
+          // --------------------------------------------------------
 
           this.countdownRunning =
             false;
 
 
 
-          // ------------------------------------------------------
+          // --------------------------------------------------------
+          // KEEP INTERNAL NUMBER AT ZERO
+          // --------------------------------------------------------
+
+          this.countdown =
+            0;
+
+
+
+          // --------------------------------------------------------
           // HIDE POPUP
-          // ------------------------------------------------------
+          // --------------------------------------------------------
 
           this.showSystemStatus =
             false;
 
 
 
-          // ------------------------------------------------------
+          // --------------------------------------------------------
           // REFRESH UI
-          // ------------------------------------------------------
+          // --------------------------------------------------------
 
           this.refreshView();
 
 
 
-          // ------------------------------------------------------
-          // SCHEDULE NEXT MONITORING CYCLE
-          // ------------------------------------------------------
+          console.log(
 
-          this.scheduleNextHealthCheck();
+            '✅ Backend health popup automatically closed.'
 
+          );
 
 
           return;
@@ -2616,17 +1985,17 @@ export class AppComponent
 
 
 
-        // ========================================================
+        // ==========================================================
         // UPDATE COUNTDOWN COLOR
-        // ========================================================
+        // ==========================================================
 
         this.updateCountdownColor();
 
 
 
-        // ========================================================
+        // ==========================================================
         // REFRESH UI
-        // ========================================================
+        // ==========================================================
 
         this.refreshView();
 
@@ -2637,21 +2006,17 @@ export class AppComponent
 
 
 
-  // ==============================================================
+  // ================================================================
   // UPDATE COUNTDOWN COLOR
-  // ==============================================================
+  // ================================================================
 
   /*
     Countdown colors:
 
         5 = RED
-
         4 = ORANGE
-
         3 = YELLOW
-
         2 = GREEN
-
         1 = BLUE
   */
 
@@ -2661,9 +2026,9 @@ export class AppComponent
     switch (this.countdown) {
 
 
-      // ========================================================
-      // 5 = RED
-      // ========================================================
+      // ============================================================
+      // 5
+      // ============================================================
 
       case 5:
 
@@ -2674,9 +2039,9 @@ export class AppComponent
 
 
 
-      // ========================================================
-      // 4 = ORANGE
-      // ========================================================
+      // ============================================================
+      // 4
+      // ============================================================
 
       case 4:
 
@@ -2687,9 +2052,9 @@ export class AppComponent
 
 
 
-      // ========================================================
-      // 3 = YELLOW
-      // ========================================================
+      // ============================================================
+      // 3
+      // ============================================================
 
       case 3:
 
@@ -2700,9 +2065,9 @@ export class AppComponent
 
 
 
-      // ========================================================
-      // 2 = GREEN
-      // ========================================================
+      // ============================================================
+      // 2
+      // ============================================================
 
       case 2:
 
@@ -2713,9 +2078,9 @@ export class AppComponent
 
 
 
-      // ========================================================
-      // 1 = BLUE
-      // ========================================================
+      // ============================================================
+      // 1
+      // ============================================================
 
       case 1:
 
@@ -2726,9 +2091,9 @@ export class AppComponent
 
 
 
-      // ========================================================
-      // SAFETY DEFAULT
-      // ========================================================
+      // ============================================================
+      // DEFAULT
+      // ============================================================
 
       default:
 
@@ -2743,110 +2108,16 @@ export class AppComponent
 
 
 
-  // ==============================================================
-  // SCHEDULE NEXT HEALTH CHECK
-  // ==============================================================
-
-  /*
-    After:
-
-        5
-        4
-        3
-        2
-        1
-
-    the popup disappears.
-
-    Then the application waits 30 seconds.
-
-    Then it checks all four APIs again.
-  */
-
-  private scheduleNextHealthCheck(): void {
-
-
-    // ============================================================
-    // DO NOTHING IF DESTROYED
-    // ============================================================
-
-    if (this.destroyed) {
-
-      return;
-
-    }
-
-
-
-    // ============================================================
-    // CLEAR OLD TIMER
-    // ============================================================
-
-    if (this.healthCheckTimer) {
-
-
-      clearTimeout(
-
-        this.healthCheckTimer
-
-      );
-
-
-      this.healthCheckTimer =
-        null;
-
-    }
-
-
-
-    // ============================================================
-    // CREATE NEW TIMER
-    // ============================================================
-
-    this.healthCheckTimer =
-
-      setTimeout(() => {
-
-
-        // ========================================================
-        // DO NOTHING AFTER DESTROY
-        // ========================================================
-
-        if (this.destroyed) {
-
-          return;
-
-        }
-
-
-
-        // ========================================================
-        // START ANOTHER COMPLETE CYCLE
-        // ========================================================
-
-        this.startHealthCheckCycle();
-
-
-      }, this.HEALTH_CHECK_INTERVAL_MS);
-
-  }
-
-
-
-  // ==============================================================
+  // ================================================================
   // STOP COUNTDOWN
-  // ==============================================================
-
-  /*
-    Stops:
-
-        5 -> 4 -> 3 -> 2 -> 1
-
-    timer.
-  */
+  // ================================================================
 
   private stopCountdown(): void {
 
+
+    // ==============================================================
+    // CHECK TIMER
+    // ==============================================================
 
     if (this.countdownTimer) {
 
@@ -2867,56 +2138,65 @@ export class AppComponent
 
 
 
-  // ==============================================================
-  // REFRESH ANGULAR VIEW
-  // ==============================================================
+  // ================================================================
+  // STOP MAXIMUM MONITORING TIMER
+  // ================================================================
 
-  /*
-    Requests normally trigger Angular change detection.
-
-    markForCheck() additionally tells Angular that this view should
-    be checked.
-
-    This is useful for keeping the live health information visible
-    immediately.
-  */
-
-  private refreshView(): void {
+  private stopMaximumMonitoringTimer(): void {
 
 
-    if (this.destroyed) {
+    // ==============================================================
+    // CHECK TIMER
+    // ==============================================================
 
-      return;
+    if (this.maximumMonitoringTimer) {
+
+
+      clearTimeout(
+
+        this.maximumMonitoringTimer
+
+      );
+
+
+      this.maximumMonitoringTimer =
+        null;
 
     }
 
 
-    this.changeDetector.markForCheck();
+
+    // ==============================================================
+    // RESET FLAG
+    // ==============================================================
+
+    this.monitoringStarted =
+      false;
 
   }
 
 
 
-  // ==============================================================
+  // ================================================================
   // RESPONDED BACKEND COUNT
-  // ==============================================================
+  // ================================================================
 
   /*
-    Used by the HTML:
+    Used by HTML:
 
-        {{ respondedBackendCount }}/4
+        {{ respondedBackendCount }}
 
-    Example:
+    Examples:
 
-        0/4 responded
+        0 / 4
 
-        1/4 responded
+        1 / 4
 
-        2/4 responded
+        2 / 4
 
-        3/4 responded
+        3 / 4
 
-        4/4 responded
+        4 / 4
   */
 
   get respondedBackendCount(): number {
@@ -2927,9 +2207,9 @@ export class AppComponent
 
 
 
-    // ============================================================
+    // ==============================================================
     // FLASK
-    // ============================================================
+    // ==============================================================
 
     if (this.flaskFirstResponse) {
 
@@ -2939,9 +2219,9 @@ export class AppComponent
 
 
 
-    // ============================================================
+    // ==============================================================
     // DJANGO
-    // ============================================================
+    // ==============================================================
 
     if (this.djangoFirstResponse) {
 
@@ -2951,9 +2231,9 @@ export class AppComponent
 
 
 
-    // ============================================================
+    // ==============================================================
     // JAVA
-    // ============================================================
+    // ==============================================================
 
     if (this.javaFirstResponse) {
 
@@ -2963,9 +2243,9 @@ export class AppComponent
 
 
 
-    // ============================================================
+    // ==============================================================
     // .NET
-    // ============================================================
+    // ==============================================================
 
     if (this.dotnetFirstResponse) {
 
@@ -2981,67 +2261,123 @@ export class AppComponent
 
 
 
-  // ==============================================================
+  // ================================================================
+  // ALL SERVICES RUNNING GETTER
+  // ================================================================
+
+  /*
+    The HTML uses:
+
+        *ngIf="allServicesRunning"
+
+    This returns TRUE only when:
+
+        Flask  = UP
+        Django = UP
+        Java   = UP
+        .NET   = UP
+  */
+
+  get allServicesRunning(): boolean {
+
+
+    return (
+
+      this.flaskStatus === true &&
+
+      this.djangoStatus === true &&
+
+      this.javaStatus === true &&
+
+      this.dotnetStatus === true
+
+    );
+
+  }
+
+
+
+  // ================================================================
+  // ANGULAR VIEW REFRESH
+  // ================================================================
+
+  /*
+    Forces Angular to check the live values.
+
+    This helps make the status changes appear immediately.
+  */
+
+  private refreshView(): void {
+
+
+    // ==============================================================
+    // DO NOTHING AFTER DESTROY
+    // ==============================================================
+
+    if (this.destroyed) {
+
+      return;
+
+    }
+
+
+
+    // ==============================================================
+    // REQUEST CHANGE DETECTION
+    // ==============================================================
+
+    this.changeDetector.markForCheck();
+
+  }
+
+
+
+  // ================================================================
   // COMPONENT DESTROY
-  // ==============================================================
+  // ================================================================
 
   /*
     IMPORTANT CLEANUP.
 
-    Stop:
+    When Angular destroys the application component:
 
-        1. Countdown timer.
-        2. Next health-check timer.
-        3. Active HTTP subscriptions.
-
-    This prevents background work after Angular destroys the
-    component.
+        1. Stop countdown.
+        2. Stop 10-minute timer.
+        3. Cancel HTTP subscriptions.
+        4. Prevent future callbacks.
   */
 
   ngOnDestroy(): void {
 
 
-    // ============================================================
-    // MARK AS DESTROYED
-    // ============================================================
+    // ==============================================================
+    // MARK DESTROYED
+    // ==============================================================
 
     this.destroyed =
       true;
 
 
 
-    // ============================================================
+    // ==============================================================
     // STOP COUNTDOWN
-    // ============================================================
+    // ==============================================================
 
     this.stopCountdown();
 
 
 
-    // ============================================================
-    // STOP NEXT HEALTH-CHECK TIMER
-    // ============================================================
+    // ==============================================================
+    // STOP 10-MINUTE TIMER
+    // ==============================================================
 
-    if (this.healthCheckTimer) {
-
-
-      clearTimeout(
-
-        this.healthCheckTimer
-
-      );
-
-
-      this.healthCheckTimer =
-        null;
-
-    }
+    this.stopMaximumMonitoringTimer();
 
 
 
-    // ============================================================
-    // CANCEL ACTIVE HTTP REQUESTS
-    // ============================================================
+    // ==============================================================
+    // CANCEL ALL HTTP REQUESTS
+    // ==============================================================
 
     this.activeSubscriptions.forEach(
 
@@ -3056,12 +2392,24 @@ export class AppComponent
 
 
 
-    // ============================================================
-    // CLEAR SUBSCRIPTION ARRAY
-    // ============================================================
+    // ==============================================================
+    // CLEAR SUBSCRIPTIONS
+    // ==============================================================
 
     this.activeSubscriptions =
       [];
+
+
+
+    // ==============================================================
+    // DEBUG
+    // ==============================================================
+
+    console.log(
+
+      '🧹 Backend health monitoring cleaned up.'
+
+    );
 
   }
 

@@ -3,6 +3,7 @@
   MAIN APPLICATION CONTAINER
   ============================================================
 -->
+
 <div class="main-container">
 
 
@@ -12,9 +13,12 @@
 
   <div class="top-section">
 
-    <h1>{{ title }}</h1>
+    <h1>
+      {{ title }}
+    </h1>
 
   </div>
+
 
 
   <!-- ========================================================
@@ -79,15 +83,25 @@
     </li>
 
 
-    <!-- NODEJS -->
-    <!-- <li>
+    <!-- ======================================================
+         NODEJS
+         ======================================================
+
+         Currently disabled.
+
+         Uncomment when NodeJS route is ready.
+         ====================================================== -->
+
+    <!--
+    <li>
       <a
         routerLink="node"
         routerLinkActive="active"
       >
         NodeJS
       </a>
-    </li> -->
+    </li>
+    -->
 
 
     <!-- API CALL -->
@@ -114,6 +128,7 @@
   </ul>
 
 
+
   <!-- ========================================================
        ANGULAR ROUTER
        ======================================================== -->
@@ -121,55 +136,222 @@
   <router-outlet></router-outlet>
 
 
+
   <!-- ========================================================
-       TEMPORARY SYSTEM STATUS POPUP
+       DYNAMIC SYSTEM STATUS POPUP
        ========================================================
 
-       This popup is visible only during the 5-second countdown.
+       IMPORTANT:
 
-       Countdown:
+       This popup is NOT simply a fixed 5-second popup.
 
-          5
-          4
-          3
-          2
-          1
-          ↓
-        HIDE
+       It is connected to the REAL backend health checks.
 
-       The popup is fixed to the bottom-left corner.
+       On page load:
+
+           Flask   -> CHECKING
+           Django  -> CHECKING
+           Java    -> CHECKING
+           .NET    -> CHECKING
+
+       Each backend updates independently.
+
+       Example:
+
+           Flask   -> 🟢 UP
+           Django  -> 🟡 CHECKING
+           Java    -> 🟢 UP
+           .NET    -> 🟡 CHECKING
+
+
+       The popup remains visible until ALL FOUR first/current
+       health checks have completed.
+
+       Once all four are finished:
+
+           5
+           4
+           3
+           2
+           1
+           ↓
+         HIDE
+
+
+       The countdown numbers blink.
+
+       Countdown colors:
+
+           5 = RED
+           4 = ORANGE
+           3 = YELLOW
+           2 = GREEN
+           1 = BLUE
+
+
+       After hiding:
+
+           health monitoring continues.
+
+       The application checks the backends again later.
+
+       If a service becomes DOWN:
+
+           🔴 System Offline / Degraded
+
+       If all services are UP:
+
+           🟢 System Ready / All Services Live
+
+       If services are still being checked:
+
+           🟡 Checking / Waking Services...
        ======================================================== -->
+
 
   <div
     *ngIf="showSystemStatus"
+
     class="system-status-popup"
-    [ngClass]="statusColor"
+
+    [class.green-status]="
+      statusColor === 'green-status'
+    "
+
+    [class.yellow-status]="
+      statusColor === 'yellow-status'
+    "
+
+    [class.red-status]="
+      statusColor === 'red-status'
+    "
   >
 
 
+
     <!-- ======================================================
-         OVERALL SYSTEM STATUS
+         SYSTEM STATUS HEADER
          ====================================================== -->
 
-    <div class="system-status-title">
+    <div class="system-status-header">
 
-      {{ systemStatus }}
+
+      <!-- ====================================================
+           TRAFFIC LIGHTS
+           ====================================================
+
+           Only the current overall status light becomes bright.
+
+           RED    = system has DOWN service
+           YELLOW = checking / waking
+           GREEN  = all services UP
+           ==================================================== -->
+
+      <div class="traffic-lights">
+
+
+        <!-- RED -->
+        <span
+          class="traffic-light red-light"
+
+          [class.light-active]="
+            statusColor === 'red-status'
+          "
+        >
+        </span>
+
+
+        <!-- YELLOW -->
+        <span
+          class="traffic-light yellow-light"
+
+          [class.light-active]="
+            statusColor === 'yellow-status'
+          "
+        >
+        </span>
+
+
+        <!-- GREEN -->
+        <span
+          class="traffic-light green-light"
+
+          [class.light-active]="
+            statusColor === 'green-status'
+          "
+        >
+        </span>
+
+      </div>
+
+
+
+      <!-- ====================================================
+           OVERALL SYSTEM STATUS TEXT
+           ==================================================== -->
+
+      <div class="system-status-title">
+
+        {{ systemStatus }}
+
+      </div>
 
     </div>
 
 
+
     <!-- ======================================================
-         LIVE COUNTDOWN
+         LIVE COUNTDOWN NUMBER
+         ======================================================
+
+         Example:
+
+             5
+             ↓
+             4
+             ↓
+             3
+             ↓
+             2
+             ↓
+             1
+             ↓
+            HIDE
+
+
+         The number is dynamically colored by countdownColor.
+
+         It also continuously blinks using CSS.
          ====================================================== -->
 
     <div
       class="countdown-number"
-      [ngClass]="countdownColor"
+
+      [class.countdown-red]="
+        countdownColor === 'countdown-red'
+      "
+
+      [class.countdown-orange]="
+        countdownColor === 'countdown-orange'
+      "
+
+      [class.countdown-yellow]="
+        countdownColor === 'countdown-yellow'
+      "
+
+      [class.countdown-green]="
+        countdownColor === 'countdown-green'
+      "
+
+      [class.countdown-blue]="
+        countdownColor === 'countdown-blue'
+      "
     >
 
       {{ countdown }}
 
     </div>
+
 
 
     <!-- ======================================================
@@ -178,13 +360,62 @@
 
     <div class="countdown-label">
 
-      seconds
+
+      <!-- ----------------------------------------------------
+           COUNTDOWN IS RUNNING
+           ---------------------------------------------------- -->
+
+      <span
+        *ngIf="countdownRunning"
+      >
+
+        seconds
+
+      </span>
+
+
+      <!-- ----------------------------------------------------
+           STILL WAITING FOR BACKENDS
+           ---------------------------------------------------- -->
+
+      <span
+        *ngIf="!countdownRunning"
+      >
+
+        waiting for backend responses...
+
+      </span>
 
     </div>
 
 
+
     <!-- ======================================================
-         BACKEND SERVICES
+         INITIAL / ACTIVE CHECK MESSAGE
+         ======================================================
+
+         While one or more APIs are still being checked:
+
+             Waking / checking all backend services...
+
+         This prevents the user from thinking the application
+         is frozen while Render services are waking up.
+         ====================================================== -->
+
+    <div
+      class="startup-message"
+
+      *ngIf="!initialHealthCheckComplete"
+    >
+
+      Waking / checking all backend services...
+
+    </div>
+
+
+
+    <!-- ======================================================
+         BACKEND SERVICES TITLE
          ====================================================== -->
 
     <div class="system-status-subtitle">
@@ -194,97 +425,459 @@
     </div>
 
 
+
     <!-- ======================================================
-         FLASK
+         FLASK STATUS
          ====================================================== -->
 
-    <div
-      class="backend-status"
-      [ngClass]="flaskStatus ? 'backend-up' : 'backend-down'"
-    >
+    <div class="backend-status">
+
+
+      <!-- ====================================================
+           FLASK NAME
+           ==================================================== -->
 
       <span class="backend-name">
+
+
+        <!-- --------------------------------------------------
+             FLASK STATUS DOT
+
+             YELLOW:
+                 request currently running
+
+             GREEN:
+                 request completed successfully
+
+             RED:
+                 request completed with failure
+             -------------------------------------------------- -->
+
+        <span
+          class="backend-dot"
+
+          [class.dot-green]="
+            flaskStatus === true &&
+            !flaskChecking
+          "
+
+          [class.dot-red]="
+            flaskStatus === false &&
+            !flaskChecking
+          "
+
+          [class.dot-yellow]="
+            flaskChecking ||
+            flaskStatus === null
+          "
+        >
+        </span>
+
+
         Flask
+
       </span>
 
+
+
+      <!-- ====================================================
+           FLASK STATE TEXT
+           ==================================================== -->
+
       <span class="backend-state">
-        {{ flaskStatus ? '🟢 UP' : '🔴 DOWN' }}
+
+
+        <!-- CHECKING -->
+        <span
+          *ngIf="flaskChecking"
+        >
+
+          🟡 CHECKING
+
+        </span>
+
+
+        <!-- UP -->
+        <span
+          *ngIf="
+            !flaskChecking &&
+            flaskStatus === true
+          "
+        >
+
+          🟢 UP
+
+        </span>
+
+
+        <!-- DOWN -->
+        <span
+          *ngIf="
+            !flaskChecking &&
+            flaskStatus === false
+          "
+        >
+
+          🔴 DOWN
+
+        </span>
+
       </span>
 
     </div>
 
 
+
     <!-- ======================================================
-         DJANGO
+         DJANGO STATUS
          ====================================================== -->
 
-    <div
-      class="backend-status"
-      [ngClass]="djangoStatus ? 'backend-up' : 'backend-down'"
-    >
+    <div class="backend-status">
+
+
+      <!-- ====================================================
+           DJANGO NAME
+           ==================================================== -->
 
       <span class="backend-name">
+
+
+        <!-- DJANGO STATUS DOT -->
+
+        <span
+          class="backend-dot"
+
+          [class.dot-green]="
+            djangoStatus === true &&
+            !djangoChecking
+          "
+
+          [class.dot-red]="
+            djangoStatus === false &&
+            !djangoChecking
+          "
+
+          [class.dot-yellow]="
+            djangoChecking ||
+            djangoStatus === null
+          "
+        >
+        </span>
+
+
         Django
+
       </span>
 
+
+
+      <!-- ====================================================
+           DJANGO STATE
+           ==================================================== -->
+
       <span class="backend-state">
-        {{ djangoStatus ? '🟢 UP' : '🔴 DOWN' }}
+
+
+        <!-- CHECKING -->
+        <span
+          *ngIf="djangoChecking"
+        >
+
+          🟡 CHECKING
+
+        </span>
+
+
+        <!-- UP -->
+        <span
+          *ngIf="
+            !djangoChecking &&
+            djangoStatus === true
+          "
+        >
+
+          🟢 UP
+
+        </span>
+
+
+        <!-- DOWN -->
+        <span
+          *ngIf="
+            !djangoChecking &&
+            djangoStatus === false
+          "
+        >
+
+          🔴 DOWN
+
+        </span>
+
       </span>
 
     </div>
 
 
+
     <!-- ======================================================
-         JAVA
+         JAVA STATUS
          ====================================================== -->
 
-    <div
-      class="backend-status"
-      [ngClass]="javaStatus ? 'backend-up' : 'backend-down'"
-    >
+    <div class="backend-status">
+
+
+      <!-- ====================================================
+           JAVA NAME
+           ==================================================== -->
 
       <span class="backend-name">
+
+
+        <!-- JAVA STATUS DOT -->
+
+        <span
+          class="backend-dot"
+
+          [class.dot-green]="
+            javaStatus === true &&
+            !javaChecking
+          "
+
+          [class.dot-red]="
+            javaStatus === false &&
+            !javaChecking
+          "
+
+          [class.dot-yellow]="
+            javaChecking ||
+            javaStatus === null
+          "
+        >
+        </span>
+
+
         Java
+
       </span>
 
+
+
+      <!-- ====================================================
+           JAVA STATE
+           ==================================================== -->
+
       <span class="backend-state">
-        {{ javaStatus ? '🟢 UP' : '🔴 DOWN' }}
+
+
+        <!-- CHECKING -->
+        <span
+          *ngIf="javaChecking"
+        >
+
+          🟡 CHECKING
+
+        </span>
+
+
+        <!-- UP -->
+        <span
+          *ngIf="
+            !javaChecking &&
+            javaStatus === true
+          "
+        >
+
+          🟢 UP
+
+        </span>
+
+
+        <!-- DOWN -->
+        <span
+          *ngIf="
+            !javaChecking &&
+            javaStatus === false
+          "
+        >
+
+          🔴 DOWN
+
+        </span>
+
       </span>
 
     </div>
 
 
+
     <!-- ======================================================
-         .NET
+         .NET STATUS
          ====================================================== -->
 
-    <div
-      class="backend-status"
-      [ngClass]="dotnetStatus ? 'backend-up' : 'backend-down'"
-    >
+    <div class="backend-status">
+
+
+      <!-- ====================================================
+           .NET NAME
+           ==================================================== -->
 
       <span class="backend-name">
+
+
+        <!-- .NET STATUS DOT -->
+
+        <span
+          class="backend-dot"
+
+          [class.dot-green]="
+            dotnetStatus === true &&
+            !dotnetChecking
+          "
+
+          [class.dot-red]="
+            dotnetStatus === false &&
+            !dotnetChecking
+          "
+
+          [class.dot-yellow]="
+            dotnetChecking ||
+            dotnetStatus === null
+          "
+        >
+        </span>
+
+
         .NET
+
       </span>
 
+
+
+      <!-- ====================================================
+           .NET STATE
+           ==================================================== -->
+
       <span class="backend-state">
-        {{ dotnetStatus ? '🟢 UP' : '🔴 DOWN' }}
+
+
+        <!-- CHECKING -->
+        <span
+          *ngIf="dotnetChecking"
+        >
+
+          🟡 CHECKING
+
+        </span>
+
+
+        <!-- UP -->
+        <span
+          *ngIf="
+            !dotnetChecking &&
+            dotnetStatus === true
+          "
+        >
+
+          🟢 UP
+
+        </span>
+
+
+        <!-- DOWN -->
+        <span
+          *ngIf="
+            !dotnetChecking &&
+            dotnetStatus === false
+          "
+        >
+
+          🔴 DOWN
+
+        </span>
+
       </span>
 
     </div>
 
 
+
     <!-- ======================================================
-         FINAL MESSAGE
+         RUNTIME RESPONSE SUMMARY
+         ======================================================
+
+         Examples:
+
+             0/4 responded
+             1/4 responded
+             2/4 responded
+             3/4 responded
+             4/4 responded
+
+         After the initial startup:
+
+             4/4 responded • Live monitoring
+
+         This makes the wake-up process visible to the user.
+         ====================================================== -->
+
+    <div class="runtime-summary">
+
+
+      <span>
+
+        {{ respondedBackendCount }}/4 responded
+
+      </span>
+
+
+      <span
+        *ngIf="initialHealthCheckComplete"
+      >
+
+        • Live monitoring
+
+      </span>
+
+    </div>
+
+
+
+    <!-- ======================================================
+         FINAL POPUP MESSAGE
          ====================================================== -->
 
     <div class="status-hide-message">
 
-      Auto closing...
+
+      <!-- ----------------------------------------------------
+           ALL FOUR FINISHED
+           ---------------------------------------------------- -->
+
+      <span
+        *ngIf="initialHealthCheckComplete"
+      >
+
+        Auto closing...
+
+      </span>
+
+
+      <!-- ----------------------------------------------------
+           STILL WAITING
+           ---------------------------------------------------- -->
+
+      <span
+        *ngIf="!initialHealthCheckComplete"
+      >
+
+        Waiting for all services...
+
+      </span>
 
     </div>
 
 
   </div>
+
 
 </div>

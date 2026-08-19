@@ -5,55 +5,21 @@
 
   DYNAMIC BACKEND HEALTH MONITORING
 
-  BEHAVIOR
-  ------------------------------------------------------------------
+  BACKENDS:
 
-  1. Page loads.
-  2. All four backend APIs start checking.
-  3. Popup stays visible while APIs are waking/checking.
-  4. Every backend updates independently.
+      1. Flask
+      2. Django
+      3. FastAPI
+      4. Java Spring Boot
+      5. ASP.NET Core
 
-        Flask   🟡 CHECKING
-        Django  🟢 UP
-        Java    🟡 CHECKING
-        .NET    🔴 DOWN
+  ORDER:
 
-  5. If all four eventually become UP:
-
-        🟢 ALL SERVICES LIVE
-
-     Then:
-
-        5
-        4
-        3
-        2
-        1
-
-     Popup hides.
-
-  6. If one or more services are DOWN:
-
-        🔴 System Degraded
-
-     Popup keeps showing live status.
-
-  7. If services recover while popup is still visible:
-
-        🔴
-        ↓
-        🟡
-        ↓
-        🟢 ALL SERVICES LIVE
-
-     Then the final 5-4-3-2-1 countdown begins.
-
-  8. Maximum safety timeout:
-
-        10 minutes
-
-     If the system never reaches the final state, the popup
-     automatically closes after 10 minutes.
+      Flask
+      Django
+      FastAPI
+      Java
+      .NET
 
   ==================================================================
 -->
@@ -140,11 +106,13 @@
     </li>
 
 
+
     <!-- ============================================================
          FASTAPI
          ============================================================ -->
 
     <li>
+
       <a
         routerLink="fastapi-rest"
         routerLinkActive="active"
@@ -153,6 +121,7 @@
         FastAPI
 
       </a>
+
     </li>
 
 
@@ -269,17 +238,22 @@
        LIVE SYSTEM STATUS POPUP
        ==============================================================
 
-       IMPORTANT:
+       BACKEND ORDER:
 
-       This popup remains visible while the application is waiting
-       for the backend services.
+           Flask
+           Django
+           FastAPI
+           Java
+           .NET
 
-       It is NOT automatically hidden when a single backend is DOWN.
+       The popup stays visible while services are being checked.
 
-       It only normally exits after ALL FOUR are UP.
+       It normally closes only after ALL FIVE services are UP and
+       the final 5-4-3-2-1 countdown completes.
 
-       The TypeScript also contains a 10-minute maximum safety
-       timeout.
+       Maximum safety timeout:
+
+           10 minutes
        ============================================================== -->
 
 
@@ -370,18 +344,6 @@
 
     <!-- ==============================================================
          LIVE STARTUP / WAITING MESSAGE
-         ==============================================================
-
-         Shown while the application is still waiting for backend
-         responses.
-
-         Example:
-
-             🔄 Waiting for all services...
-             3 / 4 responded
-
-         This gives the user a clear indication that the application
-         is still actively checking.
          ============================================================== -->
 
     <div
@@ -401,13 +363,12 @@
 
          Example:
 
-             0 / 4 responded
-             1 / 4 responded
-             2 / 4 responded
-             3 / 4 responded
-             4 / 4 responded
-
-         This updates dynamically.
+             0 / 5 responded
+             1 / 5 responded
+             2 / 5 responded
+             3 / 5 responded
+             4 / 5 responded
+             5 / 5 responded
          ============================================================== -->
 
     <div
@@ -417,7 +378,7 @@
 
       <span>
 
-        {{ respondedBackendCount }} / 4 responded
+        {{ respondedBackendCount }} / 5 responded
 
       </span>
 
@@ -439,21 +400,6 @@
 
     <!-- ==============================================================
          FINAL SUCCESS MESSAGE
-         ==============================================================
-
-         This appears when ALL FOUR APIs are UP.
-
-         The CSS can make this pulse / vibrate / glow.
-
-         The TypeScript will then start:
-
-             5
-             4
-             3
-             2
-             1
-
-         and hide the popup.
          ============================================================== -->
 
     <div
@@ -479,21 +425,6 @@
 
     <!-- ==============================================================
          LIVE COUNTDOWN
-         ==============================================================
-
-         IMPORTANT:
-
-         This countdown is ONLY the final exit countdown.
-
-             5
-             4
-             3
-             2
-             1
-
-         Every number has a different color.
-
-         The CSS makes it blink / pulse.
          ============================================================== -->
 
     <div
@@ -559,10 +490,6 @@
 
       <span class="backend-name">
 
-
-        <!-- ========================================================
-             FLASK LIVE DOT
-             ======================================================== -->
 
         <span
           class="backend-dot"
@@ -698,6 +625,92 @@
 
         <ng-container
           *ngIf="djangoStatus === false"
+        >
+
+          🔴 DOWN
+
+        </ng-container>
+
+      </span>
+
+
+    </div>
+
+
+
+    <!-- ==============================================================
+         FASTAPI STATUS
+         ============================================================== -->
+
+    <div
+      class="backend-status"
+      [ngClass]="
+        fastapiStatus === null
+          ? 'backend-checking'
+          : (
+              fastapiStatus
+                ? 'backend-up'
+                : 'backend-down'
+            )
+      "
+    >
+
+
+      <!-- ==========================================================
+           FASTAPI NAME + LIVE DOT
+           ========================================================== -->
+
+      <span class="backend-name">
+
+
+        <span
+          class="backend-dot"
+          [ngClass]="
+            fastapiStatus === null
+              ? 'dot-yellow'
+              : (
+                  fastapiStatus
+                    ? 'dot-green'
+                    : 'dot-red'
+                )
+          "
+        >
+        </span>
+
+
+        FastAPI
+
+
+      </span>
+
+
+
+      <!-- ==========================================================
+           FASTAPI STATE
+           ========================================================== -->
+
+      <span class="backend-state">
+
+        <ng-container
+          *ngIf="fastapiStatus === null"
+        >
+
+          🟡 WAKING...
+
+        </ng-container>
+
+
+        <ng-container
+          *ngIf="fastapiStatus === true"
+        >
+
+          🟢 UP
+
+        </ng-container>
+
+
+        <ng-container
+          *ngIf="fastapiStatus === false"
         >
 
           🔴 DOWN
@@ -885,17 +898,6 @@
 
     <!-- ==============================================================
          LIVE STATUS SUMMARY
-         ==============================================================
-
-         This stays visible while waiting.
-
-         Examples:
-
-             🟡 Waiting for remaining services...
-
-             🔴 1 service is currently DOWN
-
-             🟢 All services responded successfully!
          ============================================================== -->
 
     <div
@@ -909,7 +911,10 @@
            ========================================================== -->
 
       <ng-container
-        *ngIf="!allServicesRunning && respondedBackendCount < 4"
+        *ngIf="
+          !allServicesRunning &&
+          respondedBackendCount < 5
+        "
       >
 
         🟡 Waiting for remaining services...
@@ -925,7 +930,7 @@
       <ng-container
         *ngIf="
           !allServicesRunning &&
-          respondedBackendCount === 4
+          respondedBackendCount === 5
         "
       >
 
@@ -954,17 +959,6 @@
 
     <!-- ==============================================================
          AUTO-CLOSE MESSAGE
-         ==============================================================
-
-         During normal operation:
-
-             "Auto closing after 5-4-3-2-1..."
-
-         While waiting:
-
-             "Monitoring live status..."
-
-         The TypeScript controls the actual 10-minute safety limit.
          ============================================================== -->
 
     <div
@@ -1005,13 +999,6 @@
 
     <!-- ==============================================================
          MAXIMUM WAITING TIMER MESSAGE
-         ==============================================================
-
-         This is only informational.
-
-         The TypeScript will maintain the actual timer.
-
-         It prevents the user from thinking the popup is frozen.
          ============================================================== -->
 
     <div

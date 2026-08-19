@@ -4,14 +4,22 @@
   ==================================================================
 
   DYNAMIC BACKEND HEALTH MONITORING
-  ------------------------------------------------------------------
 
   BACKENDS:
 
       1. Flask
       2. Django
-      3. Java Spring Boot
-      4. ASP.NET Core
+      3. FastAPI
+      4. Java Spring Boot
+      5. ASP.NET Core
+
+  ORDER:
+
+      Flask
+      Django
+      FastAPI
+      Java
+      .NET
 
   ==================================================================
 
@@ -22,54 +30,19 @@
 
       🟡 Checking / Waking Services...
 
-      Flask   🟡 WAKING...
-      Django  🟡 WAKING...
-      Java    🟡 WAKING...
-      .NET    🟡 WAKING...
+      Flask    🟡 WAKING...
+      Django   🟡 WAKING...
+      FastAPI  🟡 WAKING...
+      Java     🟡 WAKING...
+      .NET     🟡 WAKING...
 
   Each API is checked independently.
 
-  Therefore the UI can become:
+  The popup stays visible until ALL FIVE services are UP.
 
-      Flask   🟢 UP
-      Django  🟡 WAKING...
-      Java    🟢 UP
-      .NET    🔴 DOWN
-
-  WITHOUT waiting for the other APIs.
-
-  ==================================================================
-
-  IMPORTANT SUCCESS BEHAVIOR
-  ------------------------------------------------------------------
-
-  The popup does NOT hide when one API is DOWN.
-
-  It keeps monitoring.
-
-  Example:
-
-      🔴 System Offline / Degraded
-
-      Flask   🟢 UP
-      Django  🔴 DOWN
-      Java    🟢 UP
-      .NET    🟢 UP
-
-  Popup stays visible.
-
-  If Django later becomes UP:
-
-      Flask   🟢 UP
-      Django  🟢 UP
-      Java    🟢 UP
-      .NET    🟢 UP
-
-  Then immediately:
+  Then:
 
       🟢 ALL SERVICES ARE LIVE!
-
-  And:
 
       5
       4
@@ -77,53 +50,20 @@
       2
       1
 
-  Then:
-
-      HIDE
+      Popup hides.
 
   ==================================================================
 
-  10-MINUTE SAFETY LIMIT
+  MAXIMUM SAFETY LIMIT
   ------------------------------------------------------------------
 
-  There is a maximum monitoring window:
+  Maximum monitoring window:
 
-      10 MINUTES
+      10 minutes
 
-  If all services never become healthy within that time:
+  If all services never become healthy:
 
-      Popup automatically hides.
-
-  This is ONLY the worst-case safety exit.
-
-  Normally, when all four become UP, the popup exits immediately
-  after the 5-second countdown.
-
-  ==================================================================
-
-  COUNTDOWN
-  ------------------------------------------------------------------
-
-      5 = RED
-      4 = ORANGE
-      3 = YELLOW
-      2 = GREEN
-      1 = BLUE
-
-  Every number blinks.
-
-  ==================================================================
-
-  IMPORTANT DESIGN DECISION
-  ------------------------------------------------------------------
-
-  We intentionally DO NOT use forkJoin().
-
-  forkJoin() waits for every observable before emitting.
-
-  Here we want LIVE runtime updates.
-
-  So each backend has its own subscription.
+      Popup automatically closes after 10 minutes.
 
   ==================================================================
 */
@@ -181,7 +121,7 @@ import {
 /*
   null:
 
-      The backend has not responded yet.
+      Backend has not responded yet.
 
   true:
 
@@ -269,10 +209,6 @@ export class AppComponent
   // ================================================================
 
   /*
-    Used by HTML:
-
-        [ngClass]="statusColor"
-
     Possible values:
 
         yellow-status
@@ -288,16 +224,6 @@ export class AppComponent
   // ================================================================
   // POPUP VISIBILITY
   // ================================================================
-
-  /*
-    TRUE:
-
-        Popup is visible.
-
-    FALSE:
-
-        Popup is hidden.
-  */
 
   showSystemStatus =
     true;
@@ -316,8 +242,6 @@ export class AppComponent
         3
         2
         1
-
-    Then popup hides.
   */
 
   countdown =
@@ -346,17 +270,6 @@ export class AppComponent
   // COUNTDOWN RUNNING
   // ================================================================
 
-  /*
-    FALSE:
-
-        We are still monitoring.
-
-    TRUE:
-
-        The system is healthy and the final 5-4-3-2-1 exit is
-        running.
-  */
-
   countdownRunning =
     false;
 
@@ -365,12 +278,6 @@ export class AppComponent
   // ================================================================
   // FLASK STATUS
   // ================================================================
-
-  /*
-    null = not responded yet
-    true = UP
-    false = DOWN
-  */
 
   flaskStatus:
     BackendStatus = null;
@@ -382,6 +289,15 @@ export class AppComponent
   // ================================================================
 
   djangoStatus:
+    BackendStatus = null;
+
+
+
+  // ================================================================
+  // FASTAPI STATUS
+  // ================================================================
+
+  fastapiStatus:
     BackendStatus = null;
 
 
@@ -409,26 +325,19 @@ export class AppComponent
   // ================================================================
 
   /*
-    These tell us whether each backend has responded at least once
-    during the current monitoring session.
+    These track whether each backend has responded at least once.
 
-    They are different from the actual status.
-
-    Example:
-
-        Django responds DOWN.
-
-    Then:
-
-        djangoFirstResponse = true
-
-        djangoStatus = false
+        false = not responded yet
+        true  = responded
   */
 
   private flaskFirstResponse =
     false;
 
   private djangoFirstResponse =
+    false;
+
+  private fastapiFirstResponse =
     false;
 
   private javaFirstResponse =
@@ -443,26 +352,14 @@ export class AppComponent
   // MONITORING STARTED
   // ================================================================
 
-  /*
-    Used to make sure the 10-minute maximum timer starts only once.
-  */
-
   private monitoringStarted =
     false;
 
 
 
   // ================================================================
-  // ALL SERVICES HAVE BEEN UP
+  // FINAL SUCCESS TRIGGERED
   // ================================================================
-
-  /*
-    TRUE:
-
-        All four services have simultaneously reported UP.
-
-    Once this becomes true, the final countdown starts.
-  */
 
   private finalSuccessTriggered =
     false;
@@ -473,16 +370,6 @@ export class AppComponent
   // COUNTDOWN TIMER
   // ================================================================
 
-  /*
-    Controls:
-
-        5
-        4
-        3
-        2
-        1
-  */
-
   private countdownTimer:
     ReturnType<typeof setInterval> | null = null;
 
@@ -492,16 +379,6 @@ export class AppComponent
   // TEN-MINUTE SAFETY TIMER
   // ================================================================
 
-  /*
-    Worst-case safety timer.
-
-    If all services never become healthy:
-
-        10 minutes
-        ↓
-        popup hides
-  */
-
   private maximumMonitoringTimer:
     ReturnType<typeof setTimeout> | null = null;
 
@@ -510,12 +387,6 @@ export class AppComponent
   // ================================================================
   // ACTIVE HTTP SUBSCRIPTIONS
   // ================================================================
-
-  /*
-    All backend subscriptions are stored here.
-
-    They are cancelled when Angular destroys this component.
-  */
 
   private activeSubscriptions:
     Subscription[] = [];
@@ -529,9 +400,9 @@ export class AppComponent
   /*
     Render services can sleep.
 
-    Give every API up to 20 seconds for an individual request.
+    Give each request 20 seconds.
 
-    If it still doesn't respond:
+    If there is no response:
 
         DOWN
   */
@@ -546,15 +417,15 @@ export class AppComponent
   // ================================================================
 
   /*
-    10 minutes.
+    10 minutes:
 
-        10 minutes
+        10
         ×
-        60 seconds
+        60
         ×
-        1000 milliseconds
+        1000
 
-        = 600000 ms
+        = 600000 milliseconds
   */
 
   private readonly MAX_MONITORING_TIME_MS =
@@ -574,11 +445,6 @@ export class AppComponent
   // ================================================================
   // COMPONENT DESTROYED
   // ================================================================
-
-  /*
-    Prevents asynchronous callbacks from modifying the component
-    after Angular destroys it.
-  */
 
   private destroyed =
     false;
@@ -605,17 +471,6 @@ export class AppComponent
 
   ngOnInit(): void {
 
-
-    /*
-      ==============================================================
-      START MONITORING
-      ==============================================================
-
-      The popup is immediately visible.
-
-      All APIs start independently.
-    */
-
     this.startMonitoring();
 
   }
@@ -627,12 +482,13 @@ export class AppComponent
   // ================================================================
 
   /*
-    This is the main startup method.
+    Backend order:
 
-    It performs two things:
-
-        1. Starts the 10-minute safety timer.
-        2. Starts all four backend checks.
+        Flask
+        Django
+        FastAPI
+        Java
+        .NET
   */
 
   private startMonitoring(): void {
@@ -678,7 +534,7 @@ export class AppComponent
 
 
     // ==============================================================
-    // COUNTDOWN NOT RUNNING YET
+    // COUNTDOWN OFF
     // ==============================================================
 
     this.countdownRunning =
@@ -703,7 +559,7 @@ export class AppComponent
 
 
     // ==============================================================
-    // START FLASK
+    // FLASK
     // ==============================================================
 
     this.checkBackend(
@@ -719,7 +575,7 @@ export class AppComponent
 
 
     // ==============================================================
-    // START DJANGO
+    // DJANGO
     // ==============================================================
 
     this.checkBackend(
@@ -735,7 +591,23 @@ export class AppComponent
 
 
     // ==============================================================
-    // START JAVA
+    // FASTAPI
+    // ==============================================================
+
+    this.checkBackend(
+
+      'fastapi',
+
+      'FastAPI',
+
+      'https://fastapi-rest-api.onrender.com/'
+
+    );
+
+
+
+    // ==============================================================
+    // JAVA
     // ==============================================================
 
     this.checkBackend(
@@ -751,7 +623,7 @@ export class AppComponent
 
 
     // ==============================================================
-    // START .NET
+    // .NET
     // ==============================================================
 
     this.checkBackend(
@@ -780,36 +652,6 @@ export class AppComponent
   // START MAXIMUM 10-MINUTE TIMER
   // ================================================================
 
-  /*
-    IMPORTANT:
-
-    This timer is NOT the normal exit timer.
-
-    It is only the emergency/safety exit.
-
-    Normal flow:
-
-        all 4 UP
-        ↓
-        5
-        4
-        3
-        2
-        1
-        ↓
-        hide
-
-    Worst-case flow:
-
-        something remains DOWN / never responds
-        ↓
-        wait
-        ↓
-        10 minutes reached
-        ↓
-        hide
-  */
-
   private startMaximumMonitoringTimer(): void {
 
 
@@ -835,7 +677,7 @@ export class AppComponent
 
 
     // ==============================================================
-    // CREATE 10-MINUTE TIMER
+    // CREATE TIMER
     // ==============================================================
 
     this.maximumMonitoringTimer =
@@ -856,15 +698,8 @@ export class AppComponent
 
 
         // ==========================================================
-        // IF FINAL SUCCESS ALREADY HAPPENED
+        // FINAL SUCCESS ALREADY STARTED
         // ==========================================================
-
-        /*
-          If all services already became UP, the normal countdown
-          should handle the popup.
-
-          Therefore the 10-minute timer does nothing.
-        */
 
         if (this.finalSuccessTriggered) {
 
@@ -875,7 +710,7 @@ export class AppComponent
 
 
         // ==========================================================
-        // TEN MINUTES REACHED
+        // LOG
         // ==========================================================
 
         console.warn(
@@ -887,7 +722,7 @@ export class AppComponent
 
 
         // ==========================================================
-        // UPDATE FINAL STATUS MESSAGE
+        // UPDATE STATUS
         // ==========================================================
 
         this.systemStatus =
@@ -901,7 +736,7 @@ export class AppComponent
 
 
         // ==========================================================
-        // STOP ANY COUNTDOWN
+        // STOP COUNTDOWN
         // ==========================================================
 
         this.stopCountdown();
@@ -918,7 +753,7 @@ export class AppComponent
 
 
         // ==========================================================
-        // REFRESH UI
+        // REFRESH
         // ==========================================================
 
         this.refreshView();
@@ -934,27 +769,12 @@ export class AppComponent
   // CHECK INDIVIDUAL BACKEND
   // ================================================================
 
-  /*
-    Each backend gets its own independent request.
-
-    This means:
-
-        Flask can respond first.
-
-        Java can respond second.
-
-        Django can respond later.
-
-        .NET can respond last.
-
-    The UI updates after each response.
-  */
-
   private checkBackend(
 
     backend:
       'flask' |
       'django' |
+      'fastapi' |
       'java' |
       'dotnet',
 
@@ -978,7 +798,7 @@ export class AppComponent
 
 
     // ==============================================================
-    // START REQUEST
+    // CREATE REQUEST
     // ==============================================================
 
     const request$ =
@@ -1041,7 +861,7 @@ export class AppComponent
 
 
           // ========================================================
-          // CHECK WHETHER ALL FOUR ARE NOW UP
+          // CHECK ALL SERVICES
           // ========================================================
 
           this.checkForAllServicesLive();
@@ -1049,7 +869,7 @@ export class AppComponent
 
 
           // ========================================================
-          // UPDATE UI
+          // REFRESH UI
           // ========================================================
 
           this.refreshView();
@@ -1106,7 +926,7 @@ export class AppComponent
 
 
           // --------------------------------------------------------
-          // MARK AS RESPONDED
+          // MARK RESPONDED
           // --------------------------------------------------------
 
           this.markFirstResponse(
@@ -1126,7 +946,7 @@ export class AppComponent
 
 
           // --------------------------------------------------------
-          // CHECK ALL LIVE
+          // CHECK ALL SERVICES
           // --------------------------------------------------------
 
           this.checkForAllServicesLive();
@@ -1163,22 +983,6 @@ export class AppComponent
   // GENERIC API CHECK
   // ================================================================
 
-  /*
-    Every API:
-
-        SUCCESS
-            ↓
-          true
-
-        ERROR
-            ↓
-          false
-
-        TIMEOUT
-            ↓
-          false
-  */
-
   private checkApi(
 
     url: string,
@@ -1196,12 +1000,6 @@ export class AppComponent
 
         {
 
-          /*
-            We only care whether the API responds.
-
-            The actual response body is irrelevant.
-          */
-
           responseType: 'text'
 
         }
@@ -1212,7 +1010,7 @@ export class AppComponent
 
 
         // ==========================================================
-        // 20-SECOND REQUEST TIMEOUT
+        // REQUEST TIMEOUT
         // ==========================================================
 
         timeout(
@@ -1265,12 +1063,6 @@ export class AppComponent
 
 
 
-          /*
-            Any failure means:
-
-                DOWN
-          */
-
           return of(false);
 
         }),
@@ -1280,17 +1072,6 @@ export class AppComponent
         // ==========================================================
         // FINALIZE
         // ==========================================================
-
-        /*
-          finalize() is useful for cleanup.
-
-          It runs whether the request:
-
-              succeeds
-              fails
-              times out
-              gets unsubscribed
-        */
 
         finalize(() => {
 
@@ -1318,6 +1099,7 @@ export class AppComponent
     backend:
       'flask' |
       'django' |
+      'fastapi' |
       'java' |
       'dotnet',
 
@@ -1349,6 +1131,19 @@ export class AppComponent
       case 'django':
 
         this.djangoStatus =
+          status;
+
+        break;
+
+
+
+      // ============================================================
+      // FASTAPI
+      // ============================================================
+
+      case 'fastapi':
+
+        this.fastapiStatus =
           status;
 
         break;
@@ -1394,6 +1189,7 @@ export class AppComponent
     backend:
       'flask' |
       'django' |
+      'fastapi' |
       'java' |
       'dotnet'
 
@@ -1423,6 +1219,19 @@ export class AppComponent
       case 'django':
 
         this.djangoFirstResponse =
+          true;
+
+        break;
+
+
+
+      // ============================================================
+      // FASTAPI
+      // ============================================================
+
+      case 'fastapi':
+
+        this.fastapiFirstResponse =
           true;
 
         break;
@@ -1464,46 +1273,24 @@ export class AppComponent
   // ================================================================
 
   /*
-    This method controls the main traffic-light state.
+    YELLOW:
 
-    ---------------------------------------------------------------
+      One or more services haven't responded.
 
-    YELLOW
+    RED:
 
-      If one or more APIs have not responded yet.
+      All five responded and at least one is DOWN.
 
-    ---------------------------------------------------------------
+    GREEN:
 
-    RED
-
-      If all four have responded and at least one is DOWN.
-
-    ---------------------------------------------------------------
-
-    GREEN
-
-      If all four are UP.
-
-    ---------------------------------------------------------------
-
-    IMPORTANT:
-
-      RED DOES NOT HIDE THE POPUP.
-
-      It stays visible until:
-
-          all four become UP
-
-      OR:
-
-          10-minute safety timeout.
+      All five are UP.
   */
 
   private updateOverallSystemStatus(): void {
 
 
     // ==============================================================
-    // CHECK WHETHER ALL FOUR HAVE RESPONDED
+    // ALL RESPONDED
     // ==============================================================
 
     const allResponded =
@@ -1512,6 +1299,8 @@ export class AppComponent
 
       this.djangoFirstResponse &&
 
+      this.fastapiFirstResponse &&
+
       this.javaFirstResponse &&
 
       this.dotnetFirstResponse;
@@ -1519,7 +1308,7 @@ export class AppComponent
 
 
     // ==============================================================
-    // CHECK WHETHER ALL FOUR ARE UP
+    // ALL UP
     // ==============================================================
 
     const allUp =
@@ -1528,6 +1317,8 @@ export class AppComponent
 
       this.djangoStatus === true &&
 
+      this.fastapiStatus === true &&
+
       this.javaStatus === true &&
 
       this.dotnetStatus === true;
@@ -1535,7 +1326,7 @@ export class AppComponent
 
 
     // ==============================================================
-    // CHECK WHETHER ANY SERVICE IS DOWN
+    // ANY DOWN
     // ==============================================================
 
     const anyDown =
@@ -1543,6 +1334,8 @@ export class AppComponent
       this.flaskStatus === false ||
 
       this.djangoStatus === false ||
+
+      this.fastapiStatus === false ||
 
       this.javaStatus === false ||
 
@@ -1553,12 +1346,6 @@ export class AppComponent
     // ==============================================================
     // YELLOW
     // ==============================================================
-
-    /*
-      If at least one backend hasn't responded yet:
-
-          🟡 Checking / Waking Services...
-    */
 
     if (!allResponded) {
 
@@ -1581,14 +1368,6 @@ export class AppComponent
     // RED
     // ==============================================================
 
-    /*
-      All four responded but something is DOWN:
-
-          🔴 System Offline / Degraded
-
-      KEEP POPUP OPEN.
-    */
-
     if (anyDown) {
 
 
@@ -1610,12 +1389,6 @@ export class AppComponent
     // GREEN
     // ==============================================================
 
-    /*
-      All four are UP.
-
-          🟢 System Ready / All Services Live
-    */
-
     if (allUp) {
 
 
@@ -1634,7 +1407,7 @@ export class AppComponent
 
 
     // ==============================================================
-    // SAFETY FALLBACK
+    // FALLBACK
     // ==============================================================
 
     this.systemStatus =
@@ -1653,34 +1426,24 @@ export class AppComponent
   // ================================================================
 
   /*
-    THIS IS THE MOST IMPORTANT METHOD.
+    This runs after EVERY backend response.
 
-    Every time ANY backend responds, this method runs.
+    Required state:
 
-    Example:
+        Flask    = true
+        Django   = true
+        FastAPI  = true
+        Java     = true
+        .NET     = true
 
-        Flask  = true
-        Django = false
-        Java   = true
-        .NET   = true
-
-        -> nothing happens.
-
-    Later Django becomes true:
-
-        Flask  = true
-        Django = true
-        Java   = true
-        .NET   = true
-
-        -> immediately start final countdown.
+    Only then does the final countdown begin.
   */
 
   private checkForAllServicesLive(): void {
 
 
     // ==============================================================
-    // DO NOTHING IF DESTROYED
+    // DESTROYED
     // ==============================================================
 
     if (this.destroyed) {
@@ -1692,7 +1455,7 @@ export class AppComponent
 
 
     // ==============================================================
-    // DO NOT RUN TWICE
+    // ALREADY TRIGGERED
     // ==============================================================
 
     if (this.finalSuccessTriggered) {
@@ -1704,7 +1467,7 @@ export class AppComponent
 
 
     // ==============================================================
-    // CHECK ALL FOUR
+    // CHECK ALL FIVE
     // ==============================================================
 
     const allServicesUp =
@@ -1713,6 +1476,8 @@ export class AppComponent
 
       this.djangoStatus === true &&
 
+      this.fastapiStatus === true &&
+
       this.javaStatus === true &&
 
       this.dotnetStatus === true;
@@ -1720,7 +1485,7 @@ export class AppComponent
 
 
     // ==============================================================
-    // NOT ALL UP YET
+    // NOT ALL UP
     // ==============================================================
 
     if (!allServicesUp) {
@@ -1732,7 +1497,7 @@ export class AppComponent
 
 
     // ==============================================================
-    // ALL FOUR ARE LIVE
+    // ALL FIVE ARE LIVE
     // ==============================================================
 
     console.log(
@@ -1743,7 +1508,7 @@ export class AppComponent
 
     console.log(
 
-      '🟢🟢🟢 ALL FOUR BACKENDS ARE LIVE 🟢🟢🟢'
+      '🟢🟢🟢 ALL FIVE BACKENDS ARE LIVE 🟢🟢🟢'
 
     );
 
@@ -1765,7 +1530,7 @@ export class AppComponent
 
 
     // ==============================================================
-    // UPDATE GREEN STATUS
+    // GREEN STATUS
     // ==============================================================
 
     this.systemStatus =
@@ -1778,14 +1543,8 @@ export class AppComponent
 
 
     // ==============================================================
-    // STOP 10-MINUTE SAFETY TIMER
+    // STOP TEN-MINUTE TIMER
     // ==============================================================
-
-    /*
-      We don't need the emergency timeout anymore.
-
-      The normal 5-4-3-2-1 countdown is now in control.
-    */
 
     this.stopMaximumMonitoringTimer();
 
@@ -1800,7 +1559,7 @@ export class AppComponent
 
 
     // ==============================================================
-    // REFRESH UI
+    // REFRESH
     // ==============================================================
 
     this.refreshView();
@@ -1814,9 +1573,7 @@ export class AppComponent
   // ================================================================
 
   /*
-    NORMAL SUCCESS EXIT:
-
-        ALL FOUR UP
+        ALL FIVE UP
              ↓
         🟢 ALL LIVE
              ↓
@@ -1831,15 +1588,13 @@ export class AppComponent
              1
              ↓
            HIDE
-
-    The countdown starts immediately when all four are UP.
   */
 
   private startFinalCountdown(): void {
 
 
     // ==============================================================
-    // STOP ANY EXISTING COUNTDOWN
+    // STOP EXISTING COUNTDOWN
     // ==============================================================
 
     this.stopCountdown();
@@ -1856,7 +1611,7 @@ export class AppComponent
 
 
     // ==============================================================
-    // SET COUNTDOWN TO 5
+    // SET COUNTDOWN
     // ==============================================================
 
     this.countdown =
@@ -1874,7 +1629,7 @@ export class AppComponent
 
 
     // ==============================================================
-    // SET 5 COLOR
+    // SET COLOR
     // ==============================================================
 
     this.updateCountdownColor();
@@ -1890,7 +1645,7 @@ export class AppComponent
 
 
     // ==============================================================
-    // START TIMER
+    // START INTERVAL
     // ==============================================================
 
     this.countdownTimer =
@@ -1923,7 +1678,7 @@ export class AppComponent
 
 
         // ==========================================================
-        // COUNTDOWN FINISHED
+        // FINISHED
         // ==========================================================
 
         if (this.countdown <= 0) {
@@ -1947,7 +1702,7 @@ export class AppComponent
 
 
           // --------------------------------------------------------
-          // KEEP INTERNAL NUMBER AT ZERO
+          // KEEP ZERO
           // --------------------------------------------------------
 
           this.countdown =
@@ -1965,7 +1720,7 @@ export class AppComponent
 
 
           // --------------------------------------------------------
-          // REFRESH UI
+          // REFRESH
           // --------------------------------------------------------
 
           this.refreshView();
@@ -1986,7 +1741,7 @@ export class AppComponent
 
 
         // ==========================================================
-        // UPDATE COUNTDOWN COLOR
+        // UPDATE COLOR
         // ==========================================================
 
         this.updateCountdownColor();
@@ -1994,7 +1749,7 @@ export class AppComponent
 
 
         // ==========================================================
-        // REFRESH UI
+        // REFRESH
         // ==========================================================
 
         this.refreshView();
@@ -2009,16 +1764,6 @@ export class AppComponent
   // ================================================================
   // UPDATE COUNTDOWN COLOR
   // ================================================================
-
-  /*
-    Countdown colors:
-
-        5 = RED
-        4 = ORANGE
-        3 = YELLOW
-        2 = GREEN
-        1 = BLUE
-  */
 
   private updateCountdownColor(): void {
 
@@ -2115,10 +1860,6 @@ export class AppComponent
   private stopCountdown(): void {
 
 
-    // ==============================================================
-    // CHECK TIMER
-    // ==============================================================
-
     if (this.countdownTimer) {
 
 
@@ -2145,10 +1886,6 @@ export class AppComponent
   private stopMaximumMonitoringTimer(): void {
 
 
-    // ==============================================================
-    // CHECK TIMER
-    // ==============================================================
-
     if (this.maximumMonitoringTimer) {
 
 
@@ -2166,10 +1903,6 @@ export class AppComponent
 
 
 
-    // ==============================================================
-    // RESET FLAG
-    // ==============================================================
-
     this.monitoringStarted =
       false;
 
@@ -2182,21 +1915,19 @@ export class AppComponent
   // ================================================================
 
   /*
-    Used by HTML:
-
-        {{ respondedBackendCount }}
-
     Examples:
 
-        0 / 4
+        0 / 5
 
-        1 / 4
+        1 / 5
 
-        2 / 4
+        2 / 5
 
-        3 / 4
+        3 / 5
 
-        4 / 4
+        4 / 5
+
+        5 / 5
   */
 
   get respondedBackendCount(): number {
@@ -2224,6 +1955,18 @@ export class AppComponent
     // ==============================================================
 
     if (this.djangoFirstResponse) {
+
+      count++;
+
+    }
+
+
+
+    // ==============================================================
+    // FASTAPI
+    // ==============================================================
+
+    if (this.fastapiFirstResponse) {
 
       count++;
 
@@ -2262,20 +2005,11 @@ export class AppComponent
 
 
   // ================================================================
-  // ALL SERVICES RUNNING GETTER
+  // ALL SERVICES RUNNING
   // ================================================================
 
   /*
-    The HTML uses:
-
-        *ngIf="allServicesRunning"
-
-    This returns TRUE only when:
-
-        Flask  = UP
-        Django = UP
-        Java   = UP
-        .NET   = UP
+    TRUE only when all five services are UP.
   */
 
   get allServicesRunning(): boolean {
@@ -2286,6 +2020,8 @@ export class AppComponent
       this.flaskStatus === true &&
 
       this.djangoStatus === true &&
+
+      this.fastapiStatus === true &&
 
       this.javaStatus === true &&
 
@@ -2301,18 +2037,8 @@ export class AppComponent
   // ANGULAR VIEW REFRESH
   // ================================================================
 
-  /*
-    Forces Angular to check the live values.
-
-    This helps make the status changes appear immediately.
-  */
-
   private refreshView(): void {
 
-
-    // ==============================================================
-    // DO NOTHING AFTER DESTROY
-    // ==============================================================
 
     if (this.destroyed) {
 
@@ -2321,10 +2047,6 @@ export class AppComponent
     }
 
 
-
-    // ==============================================================
-    // REQUEST CHANGE DETECTION
-    // ==============================================================
 
     this.changeDetector.markForCheck();
 
@@ -2337,9 +2059,7 @@ export class AppComponent
   // ================================================================
 
   /*
-    IMPORTANT CLEANUP.
-
-    When Angular destroys the application component:
+    Cleanup:
 
         1. Stop countdown.
         2. Stop 10-minute timer.
@@ -2368,7 +2088,7 @@ export class AppComponent
 
 
     // ==============================================================
-    // STOP 10-MINUTE TIMER
+    // STOP SAFETY TIMER
     // ==============================================================
 
     this.stopMaximumMonitoringTimer();
@@ -2376,7 +2096,7 @@ export class AppComponent
 
 
     // ==============================================================
-    // CANCEL ALL HTTP REQUESTS
+    // CANCEL HTTP REQUESTS
     // ==============================================================
 
     this.activeSubscriptions.forEach(

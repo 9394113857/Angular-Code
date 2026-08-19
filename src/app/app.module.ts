@@ -83,6 +83,7 @@ import { TaskService } from './task.service';
 import { UserService } from './user.service';
 import { NodeService } from './node.service';
 import { ApiService } from './api.service';
+import { FastapiRestComponent } from './fastapi/fastapi-rest/fastapi-rest.component';
 
 
 // ============================================================
@@ -120,6 +121,7 @@ import { ApiService } from './api.service';
 
     // NEW: Java Spring Boot User component
     JavaUserComponent,
+      FastapiRestComponent,
 
   ],
 

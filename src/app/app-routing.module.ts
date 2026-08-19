@@ -20,6 +20,7 @@ import { JavaComponent } from './java/java.component';
 import { NodeComponent } from './node/node.component';
 import { RandomComponent } from './random/random.component';
 import { JavaUserComponent } from './java-user/java-user.component';
+import { FastapiRestComponent } from './fastapi/fastapi-rest/fastapi-rest.component';
 
 const routes: Routes = [
   {
@@ -69,6 +70,9 @@ const routes: Routes = [
   },
   {
     path:'java-user',component:JavaUserComponent
+  },
+  {
+    path:'fastapi-rest',component:FastapiRestComponent
   },
 
 

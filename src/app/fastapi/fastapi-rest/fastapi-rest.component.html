@@ -1,0 +1,276 @@
+<div class="fastapi-container">
+
+  <!-- ========================================================
+       HEADER
+       ======================================================== -->
+
+  <div class="page-header">
+    <h1>🚀 FastAPI + Angular</h1>
+    <p>Mobile CRUD Dashboard</p>
+  </div>
+
+
+  <!-- ========================================================
+       SUCCESS MESSAGE
+       ======================================================== -->
+
+  <div
+    class="alert success"
+    *ngIf="successMessage"
+  >
+    ✅ {{ successMessage }}
+  </div>
+
+
+  <!-- ========================================================
+       ERROR MESSAGE
+       ======================================================== -->
+
+  <div
+    class="alert error"
+    *ngIf="errorMessage"
+  >
+    ❌ {{ errorMessage }}
+  </div>
+
+
+  <!-- ========================================================
+       ADD / EDIT FORM
+       ======================================================== -->
+
+  <div class="card">
+
+    <h2>
+      {{ editingId !== null ? '✏️ Edit Mobile' : '➕ Add Mobile' }}
+    </h2>
+
+    <form (ngSubmit)="saveMobile()">
+
+      <div class="form-grid">
+
+        <!-- Name -->
+        <div class="form-group">
+
+          <label for="mobileName">
+            Mobile Name
+          </label>
+
+          <input
+            id="mobileName"
+            type="text"
+            [(ngModel)]="mobileName"
+            name="mobileName"
+            placeholder="e.g. iPhone 17"
+            maxlength="100"
+            required
+          />
+
+        </div>
+
+
+        <!-- Price -->
+        <div class="form-group">
+
+          <label for="price">
+            Price
+          </label>
+
+          <input
+            id="price"
+            type="number"
+            [(ngModel)]="price"
+            name="price"
+            placeholder="e.g. 79999"
+            min="1"
+            required
+          />
+
+        </div>
+
+
+        <!-- RAM -->
+        <div class="form-group">
+
+          <label for="ram">
+            RAM
+          </label>
+
+          <input
+            id="ram"
+            type="text"
+            [(ngModel)]="ram"
+            name="ram"
+            placeholder="e.g. 8GB"
+            maxlength="50"
+            required
+          />
+
+        </div>
+
+
+        <!-- Storage -->
+        <div class="form-group">
+
+          <label for="storage">
+            Storage
+          </label>
+
+          <input
+            id="storage"
+            type="text"
+            [(ngModel)]="storage"
+            name="storage"
+            placeholder="e.g. 256GB"
+            maxlength="50"
+            required
+          />
+
+        </div>
+
+      </div>
+
+
+      <!-- Buttons -->
+
+      <div class="button-row">
+
+        <button
+          type="submit"
+          class="btn primary"
+          [disabled]="saving"
+        >
+          {{ saving
+              ? 'Saving...'
+              : editingId !== null
+                ? '✏️ Update Mobile'
+                : '➕ Add Mobile'
+          }}
+        </button>
+
+
+        <button
+          *ngIf="editingId !== null"
+          type="button"
+          class="btn secondary"
+          (click)="cancelEdit()"
+        >
+          Cancel
+        </button>
+
+      </div>
+
+    </form>
+
+  </div>
+
+
+  <!-- ========================================================
+       MOBILE LIST
+       ======================================================== -->
+
+  <div class="card">
+
+    <div class="list-header">
+
+      <h2>📱 Mobiles</h2>
+
+      <button
+        type="button"
+        class="btn refresh"
+        (click)="loadMobiles()"
+        [disabled]="loading"
+      >
+        🔄 Refresh
+      </button>
+
+    </div>
+
+
+    <!-- Loading -->
+
+    <div
+      class="loading"
+      *ngIf="loading"
+    >
+      ⏳ Loading mobiles...
+    </div>
+
+
+    <!-- Empty -->
+
+    <div
+      class="empty"
+      *ngIf="!loading && mobiles.length === 0"
+    >
+      📭 No mobiles found.
+    </div>
+
+
+    <!-- Mobile Cards -->
+
+    <div
+      class="mobile-grid"
+      *ngIf="!loading && mobiles.length > 0"
+    >
+
+      <div
+        class="mobile-card"
+        *ngFor="let mobile of mobiles"
+      >
+
+        <div class="mobile-id">
+          #{{ mobile.id }}
+        </div>
+
+        <h3>
+          {{ mobile.name }}
+        </h3>
+
+        <div class="mobile-info">
+
+          <p>
+            💰 <strong>₹{{ mobile.price }}</strong>
+          </p>
+
+          <p>
+            🧠 RAM:
+            <strong>{{ mobile.ram }}</strong>
+          </p>
+
+          <p>
+            💾 Storage:
+            <strong>{{ mobile.storage }}</strong>
+          </p>
+
+        </div>
+
+
+        <!-- CRUD buttons -->
+
+        <div class="card-buttons">
+
+          <button
+            type="button"
+            class="btn edit"
+            (click)="editMobile(mobile)"
+          >
+            ✏️ Edit
+          </button>
+
+          <button
+            type="button"
+            class="btn delete"
+            (click)="deleteMobile(mobile.id)"
+          >
+            🗑️ Delete
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>

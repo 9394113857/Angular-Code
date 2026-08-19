@@ -15,7 +15,8 @@ export interface Mobile {
 })
 export class FastapiApiService {
 
-  private apiUrl = 'http://127.0.0.1:5000/mobiles';
+  private apiUrl = 'https://fastapi-rest-api.onrender.com/mobiles';
+
 
   constructor(private http: HttpClient) { }
 

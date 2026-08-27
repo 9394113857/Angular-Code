@@ -1,0 +1,553 @@
+name: 🚀 Wake All 5 Backends
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  wake-and-fetch:
+    name: 🔥 Wake + Fetch All 5 Backends
+    runs-on: ubuntu-latest
+
+    # Absolute maximum GitHub Actions runtime.
+    timeout-minutes: 10
+
+    steps:
+
+      # ============================================================
+      # 🚀 INITIALIZE
+      # ============================================================
+
+      - name: 🚀 Initialize Runtime Monitor
+        shell: bash
+        run: |
+          set -u
+
+          mkdir -p runtime-results
+
+          echo " "
+          echo "╔══════════════════════════════════════════════════════════════╗"
+          echo "║        🚀 ALL 5 BACKENDS — LIVE RUNTIME MONITOR            ║"
+          echo "╠══════════════════════════════════════════════════════════════╣"
+          echo "║ Trigger       : MANUAL workflow_dispatch                   ║"
+          echo "║ Schedule      : NONE                                       ║"
+          echo "║ Cron          : NONE                                       ║"
+          echo "║ Maximum time  : 10 minutes                                 ║"
+          echo "║ Operation     : GET ONLY                                   ║"
+          echo "║ Records       : FETCHED BUT NOT PRINTED                    ║"
+          echo "╚══════════════════════════════════════════════════════════════╝"
+          echo " "
+
+          {
+            echo "# 🚀 All 5 Backends — Live Runtime Monitor"
+            echo
+            echo "### ⚡ Run Information"
+            echo
+            echo "| Property | Value |"
+            echo "|---|---|"
+            echo "| Trigger | Manual (`workflow_dispatch`) |"
+            echo "| Schedule | ❌ None |"
+            echo "| Cron | ❌ None |"
+            echo "| Maximum runtime | 10 minutes |"
+            echo "| Database writes | ❌ None |"
+            echo "| HTTP operation | GET only |"
+            echo "| Response bodies | 🔒 Hidden |"
+            echo
+            echo "### 📡 Runtime Status"
+            echo
+            echo "| # | Backend | Status | HTTP | Response | Data |"
+            echo "|---:|---|---|---:|---:|---|"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+
+      # ============================================================
+      # 🔥 CHECK ALL FIVE IN PARALLEL
+      # ============================================================
+
+      - name: 🔥 Wake + Fetch All 5 Services
+        shell: bash
+        run: |
+
+          set +e
+
+          # ========================================================
+          # VERIFIED DEPLOYED SERVICE URLS
+          # ========================================================
+
+          FLASK_BASE="https://flask-restapi-tzdm.onrender.com"
+
+          DJANGO_BASE="https://django-restapi-r7yj.onrender.com"
+
+          FASTAPI_BASE="https://fastapi-rest-api.onrender.com"
+
+          JAVA_BASE="https://java-springboot-user-backend.onrender.com"
+
+          DOTNET_BASE="https://dotnet-user-service-latest.onrender.com"
+
+
+          # ========================================================
+          # DATA ENDPOINT CANDIDATES
+          #
+          # The first working JSON endpoint is selected.
+          #
+          # IMPORTANT:
+          # Every request is GET only.
+          # No records are printed.
+          # ========================================================
+
+          FLASK_PATHS=(
+            "/api/mobiles"
+            "/mobiles"
+            "/api/mobile"
+            "/mobile"
+          )
+
+          DJANGO_PATHS=(
+            "/api/tasks"
+          )
+
+          FASTAPI_PATHS=(
+            "/mobiles"
+            "/api/mobiles"
+            "/api/mobile"
+            "/mobile"
+          )
+
+          JAVA_PATHS=(
+            "/api/users"
+          )
+
+          DOTNET_PATHS=(
+            "/api/users"
+            "/users"
+            "/api/user"
+            "/user"
+          )
+
+
+          # ========================================================
+          # FUNCTION: CHECK ONE BACKEND
+          # ========================================================
+
+          check_backend() {
+
+            NUMBER="$1"
+            NAME="$2"
+            BASE="$3"
+            PATHS_NAME="$4"
+
+            echo ""
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "[$NUMBER/5] 🔥 $NAME"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "🌐 Base URL: $BASE"
+            echo "⏳ Waking server..."
+
+            START_MS=$(date +%s%3N)
+
+            FOUND="false"
+            HTTP="000"
+            ELAPSED="0"
+            FOUND_PATH="N/A"
+            RECORDS="unknown"
+            ERROR_MESSAGE=""
+
+            # ------------------------------------------------------
+            # Select path array
+            # ------------------------------------------------------
+
+            case "$PATHS_NAME" in
+
+              FLASK)
+                PATHS=("${FLASK_PATHS[@]}")
+                ;;
+
+              DJANGO)
+                PATHS=("${DJANGO_PATHS[@]}")
+                ;;
+
+              FASTAPI)
+                PATHS=("${FASTAPI_PATHS[@]}")
+                ;;
+
+              JAVA)
+                PATHS=("${JAVA_PATHS[@]}")
+                ;;
+
+              DOTNET)
+                PATHS=("${DOTNET_PATHS[@]}")
+                ;;
+
+            esac
+
+
+            # ------------------------------------------------------
+            # Try data endpoints
+            # ------------------------------------------------------
+
+            for PATH in "${PATHS[@]}"; do
+
+              URL="${BASE}${PATH}"
+
+              echo "🔎 Testing GET: ${PATH}"
+
+              TEMP_BODY=$(mktemp)
+              TEMP_HEADERS=$(mktemp)
+
+              REQUEST_START=$(date +%s%3N)
+
+              curl \
+                --silent \
+                --show-error \
+                --location \
+                --max-time 90 \
+                --connect-timeout 20 \
+                --request GET \
+                --output "$TEMP_BODY" \
+                --dump-header "$TEMP_HEADERS" \
+                "$URL" \
+                2>/tmp/backend-curl-error
+
+              CURL_CODE=$?
+
+              REQUEST_END=$(date +%s%3N)
+
+              REQUEST_MS=$((REQUEST_END - REQUEST_START))
+
+              CURRENT_HTTP=$(awk 'toupper($1) ~ /^HTTP\// {code=$2} END {print code}' "$TEMP_HEADERS")
+
+              if [ -z "$CURRENT_HTTP" ]; then
+                CURRENT_HTTP="000"
+              fi
+
+
+              # ----------------------------------------------------
+              # Only accept successful HTTP response.
+              # ----------------------------------------------------
+
+              if [ "$CURL_CODE" -eq 0 ] && \
+                 [ "$CURRENT_HTTP" -ge 200 ] && \
+                 [ "$CURRENT_HTTP" -lt 300 ]; then
+
+                # --------------------------------------------------
+                # Detect whether response is JSON.
+                # --------------------------------------------------
+
+                if jq empty "$TEMP_BODY" >/dev/null 2>&1; then
+
+                  FOUND="true"
+                  HTTP="$CURRENT_HTTP"
+                  FOUND_PATH="$PATH"
+                  ELAPSED="$REQUEST_MS"
+
+                  # ------------------------------------------------
+                  # Count records WITHOUT PRINTING THEM.
+                  #
+                  # Supports:
+                  #   JSON array
+                  #   {"data":[...]}
+                  #   {"results":[...]}
+                  #   {"items":[...]}
+                  #   {"users":[...]}
+                  #   {"tasks":[...]}
+                  #   {"mobiles":[...]}
+                  # ------------------------------------------------
+
+                  RECORDS=$(jq -r '
+                    if type == "array" then
+                      length
+
+                    elif (.data? | type) == "array" then
+                      .data | length
+
+                    elif (.results? | type) == "array" then
+                      .results | length
+
+                    elif (.items? | type) == "array" then
+                      .items | length
+
+                    elif (.users? | type) == "array" then
+                      .users | length
+
+                    elif (.tasks? | type) == "array" then
+                      .tasks | length
+
+                    elif (.mobiles? | type) == "array" then
+                      .mobiles | length
+
+                    else
+                      "JSON_RESPONSE"
+                    end
+                  ' "$TEMP_BODY" 2>/dev/null)
+
+                  if [ -z "$RECORDS" ]; then
+                    RECORDS="JSON_RESPONSE"
+                  fi
+
+                  echo "🟢 RESPONDED"
+                  echo "📡 HTTP: $HTTP"
+                  echo "⚡ RESPONSE RECEIVED"
+                  echo "📦 DATA DETECTED"
+                  echo "📊 RECORDS: $RECORDS"
+                  echo "⏱️ ${ELAPSED}ms"
+                  echo "🔗 Endpoint: ${PATH}"
+                  echo "🔒 Response body hidden"
+
+                  rm -f "$TEMP_BODY" "$TEMP_HEADERS"
+
+                  break
+
+                fi
+
+              fi
+
+              rm -f "$TEMP_BODY" "$TEMP_HEADERS"
+
+            done
+
+
+            # ======================================================
+            # FINAL RESULT
+            # ======================================================
+
+            END_MS=$(date +%s%3N)
+
+            TOTAL_MS=$((END_MS - START_MS))
+
+
+            if [ "$FOUND" = "true" ]; then
+
+              STATUS="RESPONDED"
+              ICON="🟢"
+              DATA_STATUS="DATA DETECTED"
+
+            else
+
+              STATUS="NOT RESPONDED"
+              ICON="🔴"
+              DATA_STATUS="DATA NOT DETECTED"
+
+              ERROR_MESSAGE=$(cat /tmp/backend-curl-error 2>/dev/null | head -c 300)
+
+              echo ""
+              echo "🔴 $NAME FAILED"
+              echo "📡 No successful JSON data endpoint detected."
+              echo "⏱️ ${TOTAL_MS}ms"
+
+              if [ -n "$ERROR_MESSAGE" ]; then
+                echo "⚠️ Network error detected."
+              fi
+
+            fi
+
+
+            # ======================================================
+            # CREATE SAFE RUNTIME JSON
+            #
+            # IMPORTANT:
+            # The actual response body is NEVER stored.
+            # ======================================================
+
+            cat > "runtime-results/${PATHS_NAME,,}.json" <<EOF
+          {
+            "backend": "$NAME",
+            "base_url": "$BASE",
+            "endpoint": "$FOUND_PATH",
+            "http_status": $HTTP,
+            "response_time_ms": $TOTAL_MS,
+            "status": "$STATUS",
+            "data_status": "$DATA_STATUS",
+            "record_count": "$RECORDS",
+            "response_body": "HIDDEN"
+          }
+          EOF
+
+
+            # ======================================================
+            # GITHUB STEP SUMMARY
+            # ======================================================
+
+            echo "| $NUMBER | **$NAME** | $ICON $STATUS | **$HTTP** | **${TOTAL_MS}ms** | **$DATA_STATUS** |" \
+              >> "$GITHUB_STEP_SUMMARY"
+
+          }
+
+
+          # ========================================================
+          # PARALLEL START
+          #
+          # All five Render services are contacted at the same time.
+          # This is important for waking free-tier services quickly.
+          # ========================================================
+
+          check_backend "1" "Flask / Render" "$FLASK_BASE" "FLASK" &
+          PID_FLASK=$!
+
+          check_backend "2" "Django / Render" "$DJANGO_BASE" "DJANGO" &
+          PID_DJANGO=$!
+
+          check_backend "3" "FastAPI / Render" "$FASTAPI_BASE" "FASTAPI" &
+          PID_FASTAPI=$!
+
+          check_backend "4" "Java Spring Boot / Render" "$JAVA_BASE" "JAVA" &
+          PID_JAVA=$!
+
+          check_backend "5" ".NET / Render" "$DOTNET_BASE" "DOTNET" &
+          PID_DOTNET=$!
+
+
+          # ========================================================
+          # WAIT FOR ALL FIVE
+          # ========================================================
+
+          echo ""
+          echo "╔══════════════════════════════════════════════════════════════╗"
+          echo "║              ⏳ WAITING FOR ALL 5 SERVICES                  ║"
+          echo "║                                                              ║"
+          echo "║ Flask       → RUNNING                                       ║"
+          echo "║ Django      → RUNNING                                       ║"
+          echo "║ FastAPI     → RUNNING                                       ║"
+          echo "║ Java        → RUNNING                                       ║"
+          echo "║ .NET        → RUNNING                                       ║"
+          echo "║                                                              ║"
+          echo "║ Maximum workflow runtime: 10 minutes                        ║"
+          echo "╚══════════════════════════════════════════════════════════════╝"
+          echo ""
+
+          wait "$PID_FLASK"
+          echo "📍 Flask check finished."
+
+          wait "$PID_DJANGO"
+          echo "📍 Django check finished."
+
+          wait "$PID_FASTAPI"
+          echo "📍 FastAPI check finished."
+
+          wait "$PID_JAVA"
+          echo "📍 Java check finished."
+
+          wait "$PID_DOTNET"
+          echo "📍 .NET check finished."
+
+
+          # ========================================================
+          # FINAL DASHBOARD
+          # ========================================================
+
+          echo ""
+          echo "╔══════════════════════════════════════════════════════════════╗"
+          echo "║                 🏁 ALL 5 CHECKS FINISHED                   ║"
+          echo "╠══════════════════════════════════════════════════════════════╣"
+          echo "║                                                              ║"
+          echo "║  Flask       → checked                                     ║"
+          echo "║  Django      → checked                                     ║"
+          echo "║  FastAPI     → checked                                     ║"
+          echo "║  Java        → checked                                     ║"
+          echo "║  .NET        → checked                                     ║"
+          echo "║                                                              ║"
+          echo "║  📦 Runtime records: generated                             ║"
+          echo "║  🔒 Response bodies: hidden                                ║"
+          echo "║  🛑 Database writes: none                                  ║"
+          echo "║                                                              ║"
+          echo "╚══════════════════════════════════════════════════════════════╝"
+          echo ""
+
+
+      # ============================================================
+      # 📊 ADD VISUAL SUMMARY
+      # ============================================================
+
+      - name: 📊 Build Visual Runtime Dashboard
+        if: always()
+        shell: bash
+        run: |
+
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+
+          echo "## 🎯 Runtime Detection Dashboard" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+
+          echo "> 🔒 **Actual API response bodies are intentionally hidden.**" >> "$GITHUB_STEP_SUMMARY"
+          echo "> The monitor records whether a response and JSON data were detected." >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+
+          echo "### 🧩 Backend Architecture" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+
+          echo '```text' >> "$GITHUB_STEP_SUMMARY"
+          echo "                    MANUAL TRIGGER" >> "$GITHUB_STEP_SUMMARY"
+          echo "                          │" >> "$GITHUB_STEP_SUMMARY"
+          echo "                          ▼" >> "$GITHUB_STEP_SUMMARY"
+          echo "              ┌───────────────────────┐" >> "$GITHUB_STEP_SUMMARY"
+          echo "              │   GITHUB ACTIONS       │" >> "$GITHUB_STEP_SUMMARY"
+          echo "              │   LIVE MONITOR        │" >> "$GITHUB_STEP_SUMMARY"
+          echo "              └───────────┬───────────┘" >> "$GITHUB_STEP_SUMMARY"
+          echo "                          │" >> "$GITHUB_STEP_SUMMARY"
+          echo "          ┌───────────────┼───────────────┐" >> "$GITHUB_STEP_SUMMARY"
+          echo "          │               │               │" >> "$GITHUB_STEP_SUMMARY"
+          echo "          ▼               ▼               ▼" >> "$GITHUB_STEP_SUMMARY"
+          echo "       FLASK           DJANGO          FASTAPI" >> "$GITHUB_STEP_SUMMARY"
+          echo "          │               │               │" >> "$GITHUB_STEP_SUMMARY"
+          echo "          ▼               ▼               ▼" >> "$GITHUB_STEP_SUMMARY"
+          echo "       RENDER           RENDER           RENDER" >> "$GITHUB_STEP_SUMMARY"
+          echo "          │               │               │" >> "$GITHUB_STEP_SUMMARY"
+          echo "          └───────────────┼───────────────┘" >> "$GITHUB_STEP_SUMMARY"
+          echo "                          │" >> "$GITHUB_STEP_SUMMARY"
+          echo "             ┌────────────┴────────────┐" >> "$GITHUB_STEP_SUMMARY"
+          echo "             ▼                         ▼" >> "$GITHUB_STEP_SUMMARY"
+          echo "          JAVA                       .NET" >> "$GITHUB_STEP_SUMMARY"
+          echo "             │                         │" >> "$GITHUB_STEP_SUMMARY"
+          echo "             ▼                         ▼" >> "$GITHUB_STEP_SUMMARY"
+          echo "          RENDER                    RENDER" >> "$GITHUB_STEP_SUMMARY"
+          echo "                          │" >> "$GITHUB_STEP_SUMMARY"
+          echo "                          ▼" >> "$GITHUB_STEP_SUMMARY"
+          echo "                   📦 JSON DETECTED" >> "$GITHUB_STEP_SUMMARY"
+          echo "                          │" >> "$GITHUB_STEP_SUMMARY"
+          echo "                          ▼" >> "$GITHUB_STEP_SUMMARY"
+          echo "                   🏁 RUN COMPLETE" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+
+      # ============================================================
+      # 📦 UPLOAD SAFE RUNTIME RECORDS
+      # ============================================================
+
+      - name: 📦 Upload Runtime Detection Records
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-runtime-detection
+          path: runtime-results/
+          if-no-files-found: warn
+          retention-days: 7
+
+
+      # ============================================================
+      # 🏁 FINAL
+      # ============================================================
+
+      - name: 🏁 Final Runtime Report
+        if: always()
+        shell: bash
+        run: |
+
+          echo ""
+          echo "╔══════════════════════════════════════════════════════════════╗"
+          echo "║                 🚀 RUNTIME MONITOR CLOSED                  ║"
+          echo "╠══════════════════════════════════════════════════════════════╣"
+          echo "║                                                              ║"
+          echo "║  🟢 Flask       → checked                                  ║"
+          echo "║  🟢 Django      → checked                                  ║"
+          echo "║  🟢 FastAPI     → checked                                  ║"
+          echo "║  🟢 Java        → checked                                  ║"
+          echo "║  🟢 .NET        → checked                                  ║"
+          echo "║                                                              ║"
+          echo "║  📊 See Job Summary for visual dashboard                    ║"
+          echo "║  📦 See Artifacts for safe JSON runtime records             ║"
+          echo "║  🔒 API response bodies were not printed                    ║"
+          echo "║  ⏰ No cron / no scheduled execution                        ║"
+          echo "║                                                              ║"
+          echo "╚══════════════════════════════════════════════════════════════╝"
+          echo ""

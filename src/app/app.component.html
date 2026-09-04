@@ -3,7 +3,7 @@
   MAIN APPLICATION CONTAINER
   ==================================================================
 
-  DYNAMIC BACKEND HEALTH MONITORING
+  DYNAMIC BACKEND + DATABASE/DATA HEALTH MONITORING
 
   BACKENDS:
 
@@ -13,14 +13,27 @@
       4. Java Spring Boot
       5. ASP.NET Core
 
-  ORDER:
+  FLOW:
 
-      Flask
-      Django
-      FastAPI
-      Java
-      .NET
+      SERVER CHECK
+           ↓
+      DATA/DATABASE PATH CHECK
+           ↓
+      VALID JSON DETECTED
+           ↓
+      ALL 5 SERVER + ALL 5 DATA CHECKS UP
+           ↓
+      5 → 4 → 3 → 2 → 1
+           ↓
+      POPUP CLOSES
 
+  MAXIMUM MONITORING WINDOW:
+
+      10 MINUTES
+
+  ACTUAL RECORD CONTENT:
+
+      NEVER DISPLAYED
   ==================================================================
 -->
 
@@ -48,179 +61,97 @@
 
   <ul>
 
-
-    <!-- ============================================================
-         HOME
-         ============================================================ -->
-
     <li>
-
       <a
         routerLink="/"
         routerLinkActive="active"
         [routerLinkActiveOptions]="{ exact: true }"
       >
-
         Home Page
-
       </a>
-
     </li>
 
 
-
-    <!-- ============================================================
-         FLASK
-         ============================================================ -->
-
     <li>
-
       <a
         routerLink="flask"
         routerLinkActive="active"
       >
-
         Flask
-
       </a>
-
     </li>
 
 
-
-    <!-- ============================================================
-         DJANGO
-         ============================================================ -->
-
     <li>
-
       <a
         routerLink="task"
         routerLinkActive="active"
       >
-
         Django
-
       </a>
-
     </li>
 
 
-
-    <!-- ============================================================
-         FASTAPI
-         ============================================================ -->
-
     <li>
-
       <a
         routerLink="fastapi-rest"
         routerLinkActive="active"
       >
-
         FastAPI
-
       </a>
-
     </li>
 
 
-
-    <!-- ============================================================
-         JAVA
-         ============================================================ -->
-
     <li>
-
       <a
         routerLink="java-user"
         routerLinkActive="active"
       >
-
         Java Users
-
       </a>
-
     </li>
 
 
-
-    <!-- ============================================================
-         .NET
-         ============================================================ -->
-
     <li>
-
       <a
         routerLink="user-dotnet"
         routerLinkActive="active"
       >
-
         .NET
-
       </a>
-
     </li>
 
 
-
-    <!-- ============================================================
-         NODEJS
-         ============================================================ -->
-
     <!--
     <li>
-
       <a
         routerLink="node"
         routerLinkActive="active"
       >
-
         NodeJS
-
       </a>
-
     </li>
     -->
 
 
-
-    <!-- ============================================================
-         API CALL
-         ============================================================ -->
-
     <li>
-
       <a
         routerLink="api-call"
         routerLinkActive="active"
       >
-
         API Call
-
       </a>
-
     </li>
 
 
-
-    <!-- ============================================================
-         RANDOM
-         ============================================================ -->
-
     <li>
-
       <a
         routerLink="random"
         routerLinkActive="active"
       >
-
         Random
-
       </a>
-
     </li>
-
 
   </ul>
 
@@ -236,26 +167,7 @@
 
   <!-- ==============================================================
        LIVE SYSTEM STATUS POPUP
-       ==============================================================
-
-       BACKEND ORDER:
-
-           Flask
-           Django
-           FastAPI
-           Java
-           .NET
-
-       The popup stays visible while services are being checked.
-
-       It normally closes only after ALL FIVE services are UP and
-       the final 5-4-3-2-1 countdown completes.
-
-       Maximum safety timeout:
-
-           10 minutes
        ============================================================== -->
-
 
   <div
     *ngIf="showSystemStatus"
@@ -264,24 +176,13 @@
   >
 
 
-
     <!-- ============================================================
          HEADER
          ============================================================ -->
 
     <div class="system-status-header">
 
-
-      <!-- ==========================================================
-           TRAFFIC LIGHTS
-           ========================================================== -->
-
       <div class="traffic-lights">
-
-
-        <!-- ========================================================
-             RED TRAFFIC LIGHT
-             ======================================================== -->
 
         <span
           class="traffic-light red-light"
@@ -293,11 +194,6 @@
         </span>
 
 
-
-        <!-- ========================================================
-             YELLOW TRAFFIC LIGHT
-             ======================================================== -->
-
         <span
           class="traffic-light yellow-light"
           [ngClass]="{
@@ -308,11 +204,6 @@
         </span>
 
 
-
-        <!-- ========================================================
-             GREEN TRAFFIC LIGHT
-             ======================================================== -->
-
         <span
           class="traffic-light green-light"
           [ngClass]="{
@@ -322,14 +213,8 @@
         >
         </span>
 
-
       </div>
 
-
-
-      <!-- ==========================================================
-           MAIN SYSTEM STATUS
-           ========================================================== -->
 
       <div class="system-status-title">
 
@@ -337,39 +222,28 @@
 
       </div>
 
-
     </div>
 
 
 
-    <!-- ==============================================================
-         LIVE STARTUP / WAITING MESSAGE
-         ============================================================== -->
+    <!-- ============================================================
+         LIVE STARTUP MESSAGE
+         ============================================================ -->
 
     <div
       class="startup-message"
-      *ngIf="!allServicesRunning && !countdownRunning"
+      *ngIf="!allChecksRunning && !countdownRunning"
     >
 
-      🔄 Live checking / waiting for services...
+      🔄 Checking / waking servers and detecting databases...
 
     </div>
 
 
 
-    <!-- ==============================================================
+    <!-- ============================================================
          RESPONSE COUNTER
-         ==============================================================
-
-         Example:
-
-             0 / 5 responded
-             1 / 5 responded
-             2 / 5 responded
-             3 / 5 responded
-             4 / 5 responded
-             5 / 5 responded
-         ============================================================== -->
+         ============================================================ -->
 
     <div
       class="runtime-summary"
@@ -377,55 +251,45 @@
     >
 
       <span>
-
-        {{ respondedBackendCount }} / 5 responded
-
+        {{ respondedBackendCount }} / 5 servers responded
       </span>
 
       <span>
-
         •
-
       </span>
 
       <span>
-
-        Live
-
+        {{ detectedDatabaseCount }} / 5 data layers detected
       </span>
 
     </div>
 
 
 
-    <!-- ==============================================================
+    <!-- ============================================================
          FINAL SUCCESS MESSAGE
-         ============================================================== -->
+         ============================================================ -->
 
     <div
       class="all-live-message"
-      *ngIf="allServicesRunning"
+      *ngIf="allChecksSuccessful"
     >
 
       <span class="all-live-icon">
-
         🚀
-
       </span>
 
       <span>
-
-        ALL SERVICES ARE LIVE!
-
+        ALL 5 SERVICES + ALL 5 DATA LAYERS ARE LIVE!
       </span>
 
     </div>
 
 
 
-    <!-- ==============================================================
-         LIVE COUNTDOWN
-         ============================================================== -->
+    <!-- ============================================================
+         COUNTDOWN
+         ============================================================ -->
 
     <div
       class="countdown-number"
@@ -438,11 +302,6 @@
     </div>
 
 
-
-    <!-- ==============================================================
-         COUNTDOWN LABEL
-         ============================================================== -->
-
     <div
       class="countdown-label"
       *ngIf="countdownRunning"
@@ -454,556 +313,461 @@
 
 
 
-    <!-- ==============================================================
-         BACKEND SERVICES
-         ============================================================== -->
+    <!-- ============================================================
+         SERVER + DATABASE SERVICES
+         ============================================================ -->
 
     <div class="system-status-subtitle">
 
-      Backend Services
+      Backend + Database/Data Services
 
     </div>
 
 
 
-    <!-- ==============================================================
-         FLASK STATUS
-         ============================================================== -->
+    <!-- ============================================================
+         FLASK
+         ============================================================ -->
 
     <div
       class="backend-status"
-      [ngClass]="
-        flaskStatus === null
-          ? 'backend-checking'
-          : (
-              flaskStatus
-                ? 'backend-up'
-                : 'backend-down'
-            )
-      "
+      [ngClass]="getCombinedStatusClass(
+        flaskStatus,
+        flaskDatabaseStatus
+      )"
     >
-
-
-      <!-- ==========================================================
-           FLASK NAME + LIVE DOT
-           ========================================================== -->
 
       <span class="backend-name">
 
-
         <span
           class="backend-dot"
-          [ngClass]="
-            flaskStatus === null
-              ? 'dot-yellow'
-              : (
-                  flaskStatus
-                    ? 'dot-green'
-                    : 'dot-red'
-                )
-          "
+          [ngClass]="getBackendDotClass(
+            flaskStatus,
+            flaskDatabaseStatus
+          )"
         >
         </span>
 
-
         Flask
-
 
       </span>
 
-
-
-      <!-- ==========================================================
-           FLASK STATE
-           ========================================================== -->
 
       <span class="backend-state">
 
         <ng-container
           *ngIf="flaskStatus === null"
         >
-
           🟡 WAKING...
-
         </ng-container>
 
 
         <ng-container
-          *ngIf="flaskStatus === true"
+          *ngIf="
+            flaskStatus === true &&
+            flaskDatabaseStatus === null
+          "
         >
-
-          🟢 UP
-
+          🟡 SERVER UP / DETECTING DATA...
         </ng-container>
 
 
         <ng-container
-          *ngIf="flaskStatus === false"
+          *ngIf="
+            flaskStatus === true &&
+            flaskDatabaseStatus === true
+          "
         >
+          🟢 UP + DATA DETECTED
+        </ng-container>
 
-          🔴 DOWN
 
+        <ng-container
+          *ngIf="
+            flaskStatus !== null &&
+            flaskDatabaseStatus === false
+          "
+        >
+          🔴 SERVER UP / DATA NOT DETECTED
         </ng-container>
 
       </span>
-
 
     </div>
 
 
 
-    <!-- ==============================================================
-         DJANGO STATUS
-         ============================================================== -->
+    <!-- ============================================================
+         DJANGO
+         ============================================================ -->
 
     <div
       class="backend-status"
-      [ngClass]="
-        djangoStatus === null
-          ? 'backend-checking'
-          : (
-              djangoStatus
-                ? 'backend-up'
-                : 'backend-down'
-            )
-      "
+      [ngClass]="getCombinedStatusClass(
+        djangoStatus,
+        djangoDatabaseStatus
+      )"
     >
-
-
-      <!-- ==========================================================
-           DJANGO NAME + LIVE DOT
-           ========================================================== -->
 
       <span class="backend-name">
 
-
         <span
           class="backend-dot"
-          [ngClass]="
-            djangoStatus === null
-              ? 'dot-yellow'
-              : (
-                  djangoStatus
-                    ? 'dot-green'
-                    : 'dot-red'
-                )
-          "
+          [ngClass]="getBackendDotClass(
+            djangoStatus,
+            djangoDatabaseStatus
+          )"
         >
         </span>
 
-
         Django
-
 
       </span>
 
-
-
-      <!-- ==========================================================
-           DJANGO STATE
-           ========================================================== -->
 
       <span class="backend-state">
 
         <ng-container
           *ngIf="djangoStatus === null"
         >
-
           🟡 WAKING...
-
         </ng-container>
 
 
         <ng-container
-          *ngIf="djangoStatus === true"
+          *ngIf="
+            djangoStatus === true &&
+            djangoDatabaseStatus === null
+          "
         >
-
-          🟢 UP
-
+          🟡 SERVER UP / DETECTING DATA...
         </ng-container>
 
 
         <ng-container
-          *ngIf="djangoStatus === false"
+          *ngIf="
+            djangoStatus === true &&
+            djangoDatabaseStatus === true
+          "
         >
+          🟢 UP + DATA DETECTED
+        </ng-container>
 
-          🔴 DOWN
 
+        <ng-container
+          *ngIf="
+            djangoStatus !== null &&
+            djangoDatabaseStatus === false
+          "
+        >
+          🔴 SERVER UP / DATA NOT DETECTED
         </ng-container>
 
       </span>
-
 
     </div>
 
 
 
-    <!-- ==============================================================
-         FASTAPI STATUS
-         ============================================================== -->
+    <!-- ============================================================
+         FASTAPI
+         ============================================================ -->
 
     <div
       class="backend-status"
-      [ngClass]="
-        fastapiStatus === null
-          ? 'backend-checking'
-          : (
-              fastapiStatus
-                ? 'backend-up'
-                : 'backend-down'
-            )
-      "
+      [ngClass]="getCombinedStatusClass(
+        fastapiStatus,
+        fastapiDatabaseStatus
+      )"
     >
-
-
-      <!-- ==========================================================
-           FASTAPI NAME + LIVE DOT
-           ========================================================== -->
 
       <span class="backend-name">
 
-
         <span
           class="backend-dot"
-          [ngClass]="
-            fastapiStatus === null
-              ? 'dot-yellow'
-              : (
-                  fastapiStatus
-                    ? 'dot-green'
-                    : 'dot-red'
-                )
-          "
+          [ngClass]="getBackendDotClass(
+            fastapiStatus,
+            fastapiDatabaseStatus
+          )"
         >
         </span>
 
-
         FastAPI
-
 
       </span>
 
-
-
-      <!-- ==========================================================
-           FASTAPI STATE
-           ========================================================== -->
 
       <span class="backend-state">
 
         <ng-container
           *ngIf="fastapiStatus === null"
         >
-
           🟡 WAKING...
-
         </ng-container>
 
 
         <ng-container
-          *ngIf="fastapiStatus === true"
+          *ngIf="
+            fastapiStatus === true &&
+            fastapiDatabaseStatus === null
+          "
         >
-
-          🟢 UP
-
+          🟡 SERVER UP / DETECTING DATA...
         </ng-container>
 
 
         <ng-container
-          *ngIf="fastapiStatus === false"
+          *ngIf="
+            fastapiStatus === true &&
+            fastapiDatabaseStatus === true
+          "
         >
+          🟢 UP + DATA DETECTED
+        </ng-container>
 
-          🔴 DOWN
 
+        <ng-container
+          *ngIf="
+            fastapiStatus !== null &&
+            fastapiDatabaseStatus === false
+          "
+        >
+          🔴 SERVER UP / DATA NOT DETECTED
         </ng-container>
 
       </span>
-
 
     </div>
 
 
 
-    <!-- ==============================================================
-         JAVA STATUS
-         ============================================================== -->
+    <!-- ============================================================
+         JAVA
+         ============================================================ -->
 
     <div
       class="backend-status"
-      [ngClass]="
-        javaStatus === null
-          ? 'backend-checking'
-          : (
-              javaStatus
-                ? 'backend-up'
-                : 'backend-down'
-            )
-      "
+      [ngClass]="getCombinedStatusClass(
+        javaStatus,
+        javaDatabaseStatus
+      )"
     >
-
-
-      <!-- ==========================================================
-           JAVA NAME + LIVE DOT
-           ========================================================== -->
 
       <span class="backend-name">
 
-
         <span
           class="backend-dot"
-          [ngClass]="
-            javaStatus === null
-              ? 'dot-yellow'
-              : (
-                  javaStatus
-                    ? 'dot-green'
-                    : 'dot-red'
-                )
-          "
+          [ngClass]="getBackendDotClass(
+            javaStatus,
+            javaDatabaseStatus
+          )"
         >
         </span>
 
-
         Java
-
 
       </span>
 
-
-
-      <!-- ==========================================================
-           JAVA STATE
-           ========================================================== -->
 
       <span class="backend-state">
 
         <ng-container
           *ngIf="javaStatus === null"
         >
-
           🟡 WAKING...
-
         </ng-container>
 
 
         <ng-container
-          *ngIf="javaStatus === true"
+          *ngIf="
+            javaStatus === true &&
+            javaDatabaseStatus === null
+          "
         >
-
-          🟢 UP
-
+          🟡 SERVER UP / DETECTING DATA...
         </ng-container>
 
 
         <ng-container
-          *ngIf="javaStatus === false"
+          *ngIf="
+            javaStatus === true &&
+            javaDatabaseStatus === true
+          "
         >
+          🟢 UP + DATA DETECTED
+        </ng-container>
 
-          🔴 DOWN
 
+        <ng-container
+          *ngIf="
+            javaStatus !== null &&
+            javaDatabaseStatus === false
+          "
+        >
+          🔴 SERVER UP / DATA NOT DETECTED
         </ng-container>
 
       </span>
-
 
     </div>
 
 
 
-    <!-- ==============================================================
-         .NET STATUS
-         ============================================================== -->
+    <!-- ============================================================
+         .NET
+         ============================================================ -->
 
     <div
       class="backend-status"
-      [ngClass]="
-        dotnetStatus === null
-          ? 'backend-checking'
-          : (
-              dotnetStatus
-                ? 'backend-up'
-                : 'backend-down'
-            )
-      "
+      [ngClass]="getCombinedStatusClass(
+        dotnetStatus,
+        dotnetDatabaseStatus
+      )"
     >
-
-
-      <!-- ==========================================================
-           .NET NAME + LIVE DOT
-           ========================================================== -->
 
       <span class="backend-name">
 
-
         <span
           class="backend-dot"
-          [ngClass]="
-            dotnetStatus === null
-              ? 'dot-yellow'
-              : (
-                  dotnetStatus
-                    ? 'dot-green'
-                    : 'dot-red'
-                )
-          "
+          [ngClass]="getBackendDotClass(
+            dotnetStatus,
+            dotnetDatabaseStatus
+          )"
         >
         </span>
 
-
         .NET
-
 
       </span>
 
-
-
-      <!-- ==========================================================
-           .NET STATE
-           ========================================================== -->
 
       <span class="backend-state">
 
         <ng-container
           *ngIf="dotnetStatus === null"
         >
-
           🟡 WAKING...
-
         </ng-container>
 
 
         <ng-container
-          *ngIf="dotnetStatus === true"
+          *ngIf="
+            dotnetStatus === true &&
+            dotnetDatabaseStatus === null
+          "
         >
-
-          🟢 UP
-
+          🟡 SERVER UP / DETECTING DATA...
         </ng-container>
 
 
         <ng-container
-          *ngIf="dotnetStatus === false"
+          *ngIf="
+            dotnetStatus === true &&
+            dotnetDatabaseStatus === true
+          "
         >
+          🟢 UP + DATA DETECTED
+        </ng-container>
 
-          🔴 DOWN
 
+        <ng-container
+          *ngIf="
+            dotnetStatus !== null &&
+            dotnetDatabaseStatus === false
+          "
+        >
+          🔴 SERVER UP / DATA NOT DETECTED
         </ng-container>
 
       </span>
-
 
     </div>
 
 
 
-    <!-- ==============================================================
-         LIVE STATUS SUMMARY
-         ============================================================== -->
+    <!-- ============================================================
+         LIVE SUMMARY
+         ============================================================ -->
 
     <div
       class="live-status-message"
       *ngIf="!countdownRunning"
     >
 
-
-      <!-- ==========================================================
-           WAITING
-           ========================================================== -->
-
       <ng-container
         *ngIf="
-          !allServicesRunning &&
+          !allChecksSuccessful &&
           respondedBackendCount < 5
         "
       >
 
-        🟡 Waiting for remaining services...
+        🟡 Waiting for remaining servers...
 
       </ng-container>
 
-
-
-      <!-- ==========================================================
-           ALL RESPONDED BUT SOMETHING DOWN
-           ========================================================== -->
 
       <ng-container
         *ngIf="
-          !allServicesRunning &&
-          respondedBackendCount === 5
+          !allChecksSuccessful &&
+          respondedBackendCount === 5 &&
+          detectedDatabaseCount < 5
         "
       >
 
-        🔴 Monitoring — one or more services are DOWN
+        🟡 Servers responded — waiting for database/data detection...
 
       </ng-container>
 
-
-
-      <!-- ==========================================================
-           ALL LIVE
-           ========================================================== -->
 
       <ng-container
-        *ngIf="allServicesRunning"
+        *ngIf="allChecksSuccessful"
       >
 
-        🟢 Everything is healthy!
+        🟢 Everything is healthy — servers + data detected!
 
       </ng-container>
-
 
     </div>
 
 
 
-    <!-- ==============================================================
-         AUTO-CLOSE MESSAGE
-         ============================================================== -->
+    <!-- ============================================================
+         AUTO CLOSE
+         ============================================================ -->
 
-    <div
-      class="status-hide-message"
-    >
-
+    <div class="status-hide-message">
 
       <ng-container
         *ngIf="countdownRunning"
       >
-
         Auto closing...
-
       </ng-container>
 
 
       <ng-container
-        *ngIf="!countdownRunning && !allServicesRunning"
+        *ngIf="!countdownRunning && !allChecksSuccessful"
       >
-
         Monitoring live status...
-
       </ng-container>
 
 
       <ng-container
-        *ngIf="!countdownRunning && allServicesRunning"
+        *ngIf="!countdownRunning && allChecksSuccessful"
       >
-
         Preparing final status...
-
       </ng-container>
-
 
     </div>
 
 
 
-    <!-- ==============================================================
-         MAXIMUM WAITING TIMER MESSAGE
-         ============================================================== -->
+    <!-- ============================================================
+         MAXIMUM WINDOW
+         ============================================================ -->
 
     <div
       class="maximum-wait-message"
-      *ngIf="!countdownRunning && !allServicesRunning"
+      *ngIf="!countdownRunning && !allChecksSuccessful"
     >
 
       ⏳ Maximum monitoring window: 10 minutes
@@ -1012,7 +776,17 @@
 
 
 
-  </div>
+    <!-- ============================================================
+         PRIVACY / DATA MESSAGE
+         ============================================================ -->
 
+    <div class="maximum-wait-message">
+
+      🔒 Actual database records are never displayed.
+
+    </div>
+
+
+  </div>
 
 </div>

@@ -3,7 +3,7 @@
   APP COMPONENT
   ==================================================================
 
-  DYNAMIC BACKEND HEALTH MONITORING
+  DYNAMIC BACKEND + DATABASE/DATA HEALTH MONITORING
 
   BACKENDS:
 
@@ -13,59 +13,30 @@
       4. Java Spring Boot
       5. ASP.NET Core
 
-  ORDER:
+  FLOW:
 
-      Flask
-      Django
-      FastAPI
-      Java
-      .NET
+      SERVER CHECK
+          ↓
+      DATABASE/DATA PATH DETECTION
+          ↓
+      TRY NEXT PATH IF CURRENT PATH FAILS
+          ↓
+      FIRST VALID JSON 2xx RESPONSE
+          ↓
+      ALL 5 SERVER + ALL 5 DATA CHECKS UP
+          ↓
+      5 → 4 → 3 → 2 → 1
+          ↓
+      POPUP CLOSES
 
-  ==================================================================
+  MAXIMUM WINDOW:
 
-  MAIN BEHAVIOR
-  ------------------------------------------------------------------
+      10 MINUTES
 
-  WHEN PAGE LOADS:
+  ACTUAL RESPONSE RECORDS:
 
-      🟡 Checking / Waking Services...
-
-      Flask    🟡 WAKING...
-      Django   🟡 WAKING...
-      FastAPI  🟡 WAKING...
-      Java     🟡 WAKING...
-      .NET     🟡 WAKING...
-
-  Each API is checked independently.
-
-  The popup stays visible until ALL FIVE services are UP.
-
-  Then:
-
-      🟢 ALL SERVICES ARE LIVE!
-
-      5
-      4
-      3
-      2
-      1
-
-      Popup hides.
-
-  ==================================================================
-
-  MAXIMUM SAFETY LIMIT
-  ------------------------------------------------------------------
-
-  Maximum monitoring window:
-
-      10 minutes
-
-  If all services never become healthy:
-
-      Popup automatically closes after 10 minutes.
-
-  ==================================================================
+      NEVER PRINTED
+      NEVER STORED IN COMPONENT STATE
 */
 
 
@@ -82,7 +53,7 @@ import {
 
 
 // ==================================================================
-// HTTP CLIENT
+// HTTP
 // ==================================================================
 
 import {
@@ -113,28 +84,41 @@ import {
 } from 'rxjs/operators';
 
 
-
 // ==================================================================
-// BACKEND STATUS TYPE
+// BACKEND STATUS
 // ==================================================================
-
-/*
-  null:
-
-      Backend has not responded yet.
-
-  true:
-
-      Backend is UP.
-
-  false:
-
-      Backend is DOWN.
-*/
 
 type BackendStatus =
   boolean | null;
 
+
+// ==================================================================
+// BACKEND NAME
+// ==================================================================
+
+type BackendName =
+  'flask' |
+  'django' |
+  'fastapi' |
+  'java' |
+  'dotnet';
+
+
+// ==================================================================
+// DATA DETECTION RESULT
+// ==================================================================
+
+interface DataDetectionResult {
+
+  detected: boolean;
+
+  endpoint: string;
+
+  httpStatus: number;
+
+  recordCount: string;
+
+}
 
 
 // ==================================================================
@@ -143,41 +127,21 @@ type BackendStatus =
 
 @Component({
 
-  // ----------------------------------------------------------------
-  // ROOT SELECTOR
-  // ----------------------------------------------------------------
-
   selector: 'app-root',
 
-
-  // ----------------------------------------------------------------
-  // HTML FILE
-  // ----------------------------------------------------------------
-
   templateUrl: './app.component.html',
-
-
-  // ----------------------------------------------------------------
-  // CSS FILE
-  // ----------------------------------------------------------------
 
   styleUrls: ['./app.component.css']
 
 })
 
 
-
-// ==================================================================
-// APP COMPONENT CLASS
-// ==================================================================
-
 export class AppComponent
   implements OnInit, OnDestroy {
 
 
-
   // ================================================================
-  // APPLICATION TITLE
+  // TITLE
   // ================================================================
 
   title =
@@ -186,18 +150,8 @@ export class AppComponent
 
 
   // ================================================================
-  // OVERALL SYSTEM STATUS
+  // OVERALL STATUS
   // ================================================================
-
-  /*
-    Possible states:
-
-        🟡 Checking / Waking Services...
-
-        🔴 System Offline / Degraded
-
-        🟢 System Ready / All Services Live
-  */
 
   systemStatus =
     '🟡 Checking / Waking Services...';
@@ -205,16 +159,8 @@ export class AppComponent
 
 
   // ================================================================
-  // OVERALL STATUS CSS CLASS
+  // OVERALL STATUS COLOR
   // ================================================================
-
-  /*
-    Possible values:
-
-        yellow-status
-        red-status
-        green-status
-  */
 
   statusColor =
     'yellow-status';
@@ -222,7 +168,7 @@ export class AppComponent
 
 
   // ================================================================
-  // POPUP VISIBILITY
+  // POPUP
   // ================================================================
 
   showSystemStatus =
@@ -234,41 +180,15 @@ export class AppComponent
   // COUNTDOWN
   // ================================================================
 
-  /*
-    Final exit countdown:
-
-        5
-        4
-        3
-        2
-        1
-  */
-
   countdown =
     5;
 
 
 
-  // ================================================================
-  // COUNTDOWN COLOR
-  // ================================================================
-
-  /*
-    5 = RED
-    4 = ORANGE
-    3 = YELLOW
-    2 = GREEN
-    1 = BLUE
-  */
-
   countdownColor =
     'countdown-red';
 
 
-
-  // ================================================================
-  // COUNTDOWN RUNNING
-  // ================================================================
 
   countdownRunning =
     false;
@@ -276,44 +196,24 @@ export class AppComponent
 
 
   // ================================================================
-  // FLASK STATUS
+  // SERVER STATUS
   // ================================================================
 
   flaskStatus:
     BackendStatus = null;
 
 
-
-  // ================================================================
-  // DJANGO STATUS
-  // ================================================================
-
   djangoStatus:
     BackendStatus = null;
 
-
-
-  // ================================================================
-  // FASTAPI STATUS
-  // ================================================================
 
   fastapiStatus:
     BackendStatus = null;
 
 
-
-  // ================================================================
-  // JAVA STATUS
-  // ================================================================
-
   javaStatus:
     BackendStatus = null;
 
-
-
-  // ================================================================
-  // .NET STATUS
-  // ================================================================
 
   dotnetStatus:
     BackendStatus = null;
@@ -321,27 +221,103 @@ export class AppComponent
 
 
   // ================================================================
-  // FIRST RESPONSE FLAGS
+  // DATABASE / DATA STATUS
   // ================================================================
 
-  /*
-    These track whether each backend has responded at least once.
+  flaskDatabaseStatus:
+    BackendStatus = null;
 
-        false = not responded yet
-        true  = responded
-  */
+
+  djangoDatabaseStatus:
+    BackendStatus = null;
+
+
+  fastapiDatabaseStatus:
+    BackendStatus = null;
+
+
+  javaDatabaseStatus:
+    BackendStatus = null;
+
+
+  dotnetDatabaseStatus:
+    BackendStatus = null;
+
+
+
+  // ================================================================
+  // DATA ENDPOINTS FOUND
+  //
+  // These are intentionally kept separate from the server URLs.
+  // ================================================================
+
+  private flaskDatabaseEndpoint =
+    'N/A';
+
+
+  private djangoDatabaseEndpoint =
+    'N/A';
+
+
+  private fastapiDatabaseEndpoint =
+    'N/A';
+
+
+  private javaDatabaseEndpoint =
+    'N/A';
+
+
+  private dotnetDatabaseEndpoint =
+    'N/A';
+
+
+
+  // ================================================================
+  // RECORD METADATA ONLY
+  //
+  // No actual records are stored.
+  // ================================================================
+
+  private flaskRecordCount =
+    'N/A';
+
+
+  private djangoRecordCount =
+    'N/A';
+
+
+  private fastapiRecordCount =
+    'N/A';
+
+
+  private javaRecordCount =
+    'N/A';
+
+
+  private dotnetRecordCount =
+    'N/A';
+
+
+
+  // ================================================================
+  // FIRST SERVER RESPONSE FLAGS
+  // ================================================================
 
   private flaskFirstResponse =
     false;
 
+
   private djangoFirstResponse =
     false;
+
 
   private fastapiFirstResponse =
     false;
 
+
   private javaFirstResponse =
     false;
+
 
   private dotnetFirstResponse =
     false;
@@ -349,19 +325,14 @@ export class AppComponent
 
 
   // ================================================================
-  // MONITORING STARTED
+  // MONITORING TIMER
   // ================================================================
+
+  private maximumMonitoringTimer:
+    ReturnType<typeof setTimeout> | null = null;
+
 
   private monitoringStarted =
-    false;
-
-
-
-  // ================================================================
-  // FINAL SUCCESS TRIGGERED
-  // ================================================================
-
-  private finalSuccessTriggered =
     false;
 
 
@@ -376,16 +347,7 @@ export class AppComponent
 
 
   // ================================================================
-  // TEN-MINUTE SAFETY TIMER
-  // ================================================================
-
-  private maximumMonitoringTimer:
-    ReturnType<typeof setTimeout> | null = null;
-
-
-
-  // ================================================================
-  // ACTIVE HTTP SUBSCRIPTIONS
+  // ACTIVE SUBSCRIPTIONS
   // ================================================================
 
   private activeSubscriptions:
@@ -394,17 +356,31 @@ export class AppComponent
 
 
   // ================================================================
-  // API TIMEOUT
+  // FINAL SUCCESS
+  // ================================================================
+
+  private finalSuccessTriggered =
+    false;
+
+
+
+  // ================================================================
+  // DESTROYED
+  // ================================================================
+
+  private destroyed =
+    false;
+
+
+
+  // ================================================================
+  // REQUEST TIMEOUT
   // ================================================================
 
   /*
-    Render services can sleep.
+    Render may need time to wake up.
 
-    Give each request 20 seconds.
-
-    If there is no response:
-
-        DOWN
+    Each individual request gets 20 seconds.
   */
 
   private readonly API_TIMEOUT_MS =
@@ -413,20 +389,8 @@ export class AppComponent
 
 
   // ================================================================
-  // MAXIMUM MONITORING TIME
+  // MAXIMUM MONITORING WINDOW
   // ================================================================
-
-  /*
-    10 minutes:
-
-        10
-        ×
-        60
-        ×
-        1000
-
-        = 600000 milliseconds
-  */
 
   private readonly MAX_MONITORING_TIME_MS =
     10 * 60 * 1000;
@@ -434,7 +398,7 @@ export class AppComponent
 
 
   // ================================================================
-  // COUNTDOWN START VALUE
+  // COUNTDOWN
   // ================================================================
 
   private readonly COUNTDOWN_SECONDS =
@@ -443,11 +407,20 @@ export class AppComponent
 
 
   // ================================================================
-  // COMPONENT DESTROYED
+  // LIGHTWEIGHT QUERY
   // ================================================================
 
-  private destroyed =
-    false;
+  /*
+    ?limit=1 is only a hint.
+
+    If an API ignores it and returns its normal JSON response,
+    we still inspect only JSON structure/metadata.
+
+    We NEVER put actual records into component state.
+  */
+
+  private readonly LIGHT_QUERY =
+    '?limit=1';
 
 
 
@@ -466,7 +439,7 @@ export class AppComponent
 
 
   // ================================================================
-  // ANGULAR INITIALIZATION
+  // INIT
   // ================================================================
 
   ngOnInit(): void {
@@ -481,22 +454,7 @@ export class AppComponent
   // START MONITORING
   // ================================================================
 
-  /*
-    Backend order:
-
-        Flask
-        Django
-        FastAPI
-        Java
-        .NET
-  */
-
   private startMonitoring(): void {
-
-
-    // ==============================================================
-    // SAFETY
-    // ==============================================================
 
     if (this.destroyed) {
 
@@ -506,61 +464,33 @@ export class AppComponent
 
 
 
-    // ==============================================================
-    // SHOW POPUP
-    // ==============================================================
-
     this.showSystemStatus =
       true;
 
 
-
-    // ==============================================================
-    // RESET FINAL SUCCESS
-    // ==============================================================
 
     this.finalSuccessTriggered =
       false;
 
 
 
-    // ==============================================================
-    // RESET COUNTDOWN
-    // ==============================================================
+    this.countdownRunning =
+      false;
+
+
 
     this.countdown =
       this.COUNTDOWN_SECONDS;
 
 
 
-    // ==============================================================
-    // COUNTDOWN OFF
-    // ==============================================================
-
-    this.countdownRunning =
-      false;
-
-
-
-    // ==============================================================
-    // RESET COUNTDOWN COLOR
-    // ==============================================================
-
     this.updateCountdownColor();
 
 
 
-    // ==============================================================
-    // START TEN-MINUTE SAFETY TIMER
-    // ==============================================================
-
-    this.startMaximumMonitoringTimer();
-
-
-
-    // ==============================================================
-    // FLASK
-    // ==============================================================
+    // --------------------------------------------------------------
+    // SERVER + DATABASE CHECKS
+    // --------------------------------------------------------------
 
     this.checkBackend(
 
@@ -568,15 +498,20 @@ export class AppComponent
 
       'Flask',
 
-      'https://flask-restapi-tzdm.onrender.com/'
+      'https://flask-restapi-tzdm.onrender.com/',
+
+      [
+
+        '/api/mobiles',
+        '/mobiles',
+        '/api/mobile',
+        '/mobile'
+
+      ]
 
     );
 
 
-
-    // ==============================================================
-    // DJANGO
-    // ==============================================================
 
     this.checkBackend(
 
@@ -584,15 +519,17 @@ export class AppComponent
 
       'Django',
 
-      'https://django-restapi-r7yj.onrender.com/'
+      'https://django-restapi-r7yj.onrender.com/',
+
+      [
+
+        '/api/tasks'
+
+      ]
 
     );
 
 
-
-    // ==============================================================
-    // FASTAPI
-    // ==============================================================
 
     this.checkBackend(
 
@@ -600,15 +537,28 @@ export class AppComponent
 
       'FastAPI',
 
-      'https://fastapi-rest-api.onrender.com/'
+      'https://fastapi-rest-api.onrender.com/',
+
+      [
+
+        '/mobiles',
+        '/api/mobiles',
+        '/api/mobile',
+        '/mobile'
+
+      ]
 
     );
 
 
 
-    // ==============================================================
-    // JAVA
-    // ==============================================================
+    /*
+      IMPORTANT:
+
+      Java server URL is the ROOT.
+
+      /api/users belongs to the data/database detection phase.
+    */
 
     this.checkBackend(
 
@@ -616,15 +566,17 @@ export class AppComponent
 
       'Java',
 
-      'https://java-springboot-user-backend.onrender.com/api/users'
+      'https://java-springboot-user-backend.onrender.com/',
+
+      [
+
+        '/api/users'
+
+      ]
 
     );
 
 
-
-    // ==============================================================
-    // .NET
-    // ==============================================================
 
     this.checkBackend(
 
@@ -632,15 +584,28 @@ export class AppComponent
 
       '.NET',
 
-      'https://dotnet-user-service-latest.onrender.com/'
+      'https://dotnet-user-service-latest.onrender.com/',
+
+      [
+
+        '/api/users',
+        '/users',
+        '/api/user',
+        '/user'
+
+      ]
 
     );
 
 
 
-    // ==============================================================
-    // INITIAL UI REFRESH
-    // ==============================================================
+    // --------------------------------------------------------------
+    // MAXIMUM WINDOW
+    // --------------------------------------------------------------
+
+    this.startMaximumMonitoringTimer();
+
+
 
     this.refreshView();
 
@@ -649,145 +614,20 @@ export class AppComponent
 
 
   // ================================================================
-  // START MAXIMUM 10-MINUTE TIMER
-  // ================================================================
-
-  private startMaximumMonitoringTimer(): void {
-
-
-    // ==============================================================
-    // DO NOT START TWICE
-    // ==============================================================
-
-    if (this.monitoringStarted) {
-
-      return;
-
-    }
-
-
-
-    // ==============================================================
-    // MARK STARTED
-    // ==============================================================
-
-    this.monitoringStarted =
-      true;
-
-
-
-    // ==============================================================
-    // CREATE TIMER
-    // ==============================================================
-
-    this.maximumMonitoringTimer =
-
-      setTimeout(() => {
-
-
-        // ==========================================================
-        // COMPONENT DESTROYED
-        // ==========================================================
-
-        if (this.destroyed) {
-
-          return;
-
-        }
-
-
-
-        // ==========================================================
-        // FINAL SUCCESS ALREADY STARTED
-        // ==========================================================
-
-        if (this.finalSuccessTriggered) {
-
-          return;
-
-        }
-
-
-
-        // ==========================================================
-        // LOG
-        // ==========================================================
-
-        console.warn(
-
-          '⏰ Maximum 10-minute monitoring window reached.'
-
-        );
-
-
-
-        // ==========================================================
-        // UPDATE STATUS
-        // ==========================================================
-
-        this.systemStatus =
-          '🔴 Monitoring timeout reached';
-
-
-
-        this.statusColor =
-          'red-status';
-
-
-
-        // ==========================================================
-        // STOP COUNTDOWN
-        // ==========================================================
-
-        this.stopCountdown();
-
-
-
-        // ==========================================================
-        // HIDE POPUP
-        // ==========================================================
-
-        this.showSystemStatus =
-          false;
-
-
-
-        // ==========================================================
-        // REFRESH
-        // ==========================================================
-
-        this.refreshView();
-
-
-      }, this.MAX_MONITORING_TIME_MS);
-
-  }
-
-
-
-  // ================================================================
-  // CHECK INDIVIDUAL BACKEND
+  // CHECK COMPLETE BACKEND
   // ================================================================
 
   private checkBackend(
 
-    backend:
-      'flask' |
-      'django' |
-      'fastapi' |
-      'java' |
-      'dotnet',
+    backend: BackendName,
 
     serviceName: string,
 
-    url: string
+    baseUrl: string,
+
+    databasePaths: string[]
 
   ): void {
-
-
-    // ==============================================================
-    // SAFETY
-    // ==============================================================
 
     if (this.destroyed) {
 
@@ -797,38 +637,24 @@ export class AppComponent
 
 
 
-    // ==============================================================
-    // CREATE REQUEST
-    // ==============================================================
+    // --------------------------------------------------------------
+    // STEP 1
+    // SERVER CHECK
+    // --------------------------------------------------------------
 
-    const request$ =
-      this.checkApi(
+    const serverSubscription =
 
-        url,
+      this.checkServer(
+
+        baseUrl,
 
         serviceName
 
-      );
+      )
 
-
-
-    // ==============================================================
-    // SUBSCRIBE
-    // ==============================================================
-
-    const subscription =
-      request$.subscribe({
-
-        // ==========================================================
-        // RESPONSE
-        // ==========================================================
+      .subscribe({
 
         next: (isUp: boolean) => {
-
-
-          // ========================================================
-          // STORE RESULT
-          // ========================================================
 
           this.setBackendStatus(
 
@@ -840,10 +666,6 @@ export class AppComponent
 
 
 
-          // ========================================================
-          // MARK FIRST RESPONSE
-          // ========================================================
-
           this.markFirstResponse(
 
             backend
@@ -852,41 +674,57 @@ export class AppComponent
 
 
 
-          // ========================================================
-          // UPDATE OVERALL STATUS
-          // ========================================================
-
           this.updateOverallSystemStatus();
 
 
-
-          // ========================================================
-          // CHECK ALL SERVICES
-          // ========================================================
-
-          this.checkForAllServicesLive();
-
-
-
-          // ========================================================
-          // REFRESH UI
-          // ========================================================
 
           this.refreshView();
 
 
 
-          // ========================================================
-          // CONSOLE
-          // ========================================================
+          /*
+            Only attempt database/data detection when the server
+            itself is reachable.
+          */
 
-          console.log(
+          if (!isUp) {
 
-            `Runtime Health → ${serviceName}:`,
+            this.setDatabaseStatus(
 
-            isUp
-              ? '🟢 UP'
-              : '🔴 DOWN'
+              backend,
+
+              false
+
+            );
+
+
+
+            this.updateOverallSystemStatus();
+
+
+
+            this.refreshView();
+
+
+
+            return;
+
+          }
+
+
+
+          // --------------------------------------------------------
+          // STEP 2
+          // DATABASE / DATA DETECTION
+          // --------------------------------------------------------
+
+          this.checkDatabaseData(
+
+            backend,
+
+            baseUrl,
+
+            databasePaths
 
           );
 
@@ -894,26 +732,7 @@ export class AppComponent
 
 
 
-        // ==========================================================
-        // UNEXPECTED ERROR
-        // ==========================================================
-
-        error: (error) => {
-
-
-          console.error(
-
-            `Unexpected ${serviceName} health error:`,
-
-            error
-
-          );
-
-
-
-          // --------------------------------------------------------
-          // TREAT ERROR AS DOWN
-          // --------------------------------------------------------
+        error: () => {
 
           this.setBackendStatus(
 
@@ -925,10 +744,6 @@ export class AppComponent
 
 
 
-          // --------------------------------------------------------
-          // MARK RESPONDED
-          // --------------------------------------------------------
-
           this.markFirstResponse(
 
             backend
@@ -937,25 +752,19 @@ export class AppComponent
 
 
 
-          // --------------------------------------------------------
-          // UPDATE STATUS
-          // --------------------------------------------------------
+          this.setDatabaseStatus(
+
+            backend,
+
+            false
+
+          );
+
+
 
           this.updateOverallSystemStatus();
 
 
-
-          // --------------------------------------------------------
-          // CHECK ALL SERVICES
-          // --------------------------------------------------------
-
-          this.checkForAllServicesLive();
-
-
-
-          // --------------------------------------------------------
-          // REFRESH UI
-          // --------------------------------------------------------
 
           this.refreshView();
 
@@ -965,13 +774,9 @@ export class AppComponent
 
 
 
-    // ==============================================================
-    // STORE SUBSCRIPTION
-    // ==============================================================
-
     this.activeSubscriptions.push(
 
-      subscription
+      serverSubscription
 
     );
 
@@ -980,17 +785,16 @@ export class AppComponent
 
 
   // ================================================================
-  // GENERIC API CHECK
+  // SERVER CHECK
   // ================================================================
 
-  private checkApi(
+  private checkServer(
 
     url: string,
 
     serviceName: string
 
   ): Observable<boolean> {
-
 
     return this.http
 
@@ -1008,11 +812,6 @@ export class AppComponent
 
       .pipe(
 
-
-        // ==========================================================
-        // REQUEST TIMEOUT
-        // ==========================================================
-
         timeout(
 
           this.API_TIMEOUT_MS
@@ -1021,18 +820,11 @@ export class AppComponent
 
 
 
-        // ==========================================================
-        // SUCCESS
-        // ==========================================================
-
         map(() => {
-
 
           console.log(
 
-            `🟢 ${serviceName} responded successfully.`,
-
-            url
+            `🟢 ${serviceName} server responded.`
 
           );
 
@@ -1044,18 +836,11 @@ export class AppComponent
 
 
 
-        // ==========================================================
-        // ERROR
-        // ==========================================================
-
         catchError((error) => {
 
+          console.warn(
 
-          console.error(
-
-            `🔴 ${serviceName} health check failed.`,
-
-            url,
+            `🔴 ${serviceName} server check failed.`,
 
             error
 
@@ -1069,16 +854,11 @@ export class AppComponent
 
 
 
-        // ==========================================================
-        // FINALIZE
-        // ==========================================================
-
         finalize(() => {
-
 
           console.log(
 
-            `Health request finished → ${serviceName}`
+            `Server check finished → ${serviceName}`
 
           );
 
@@ -1091,29 +871,588 @@ export class AppComponent
 
 
   // ================================================================
-  // SET BACKEND STATUS
+  // DATABASE / DATA DETECTION
+  //
+  // IMPORTANT:
+  //
+  // Every configured path is tried.
+  //
+  // Failed path:
+  //
+  //     skip
+  //     ↓
+  //     next path
+  //
+  // Successful path:
+  //
+  //     2xx
+  //     +
+  //     valid JSON
+  //     ↓
+  //     DATA DETECTED
+  // ================================================================
+
+  private checkDatabaseData(
+
+    backend: BackendName,
+
+    baseUrl: string,
+
+    paths: string[]
+
+  ): void {
+
+    if (this.destroyed) {
+
+      return;
+
+    }
+
+
+
+    let index =
+      0;
+
+
+
+    const tryNextPath = (): void => {
+
+      if (this.destroyed) {
+
+        return;
+
+      }
+
+
+
+      // ------------------------------------------------------------
+      // ALL PATHS FAILED
+      // ------------------------------------------------------------
+
+      if (index >= paths.length) {
+
+        this.setDatabaseStatus(
+
+          backend,
+
+          false
+
+        );
+
+
+
+        this.updateOverallSystemStatus();
+
+
+
+        this.refreshView();
+
+
+
+        return;
+
+      }
+
+
+
+      const currentPath =
+        paths[index];
+
+
+
+      index++;
+
+
+
+      const url =
+
+        this.buildLightweightUrl(
+
+          baseUrl,
+
+          currentPath
+
+        );
+
+
+
+      console.log(
+
+        `🔎 ${backend} data detection → ${currentPath}`
+
+      );
+
+
+
+      const subscription =
+
+        this.http
+
+          .get(
+
+            url,
+
+            {
+
+              observe: 'response',
+
+              responseType: 'text'
+
+            }
+
+          )
+
+          .pipe(
+
+            timeout(
+
+              this.API_TIMEOUT_MS
+
+            ),
+
+            map((response) => {
+
+              return this.inspectDataResponse(
+
+                response.status,
+
+                response.body
+
+              );
+
+            }),
+
+            catchError(() => {
+
+              /*
+                IMPORTANT:
+
+                Do not fail the entire backend.
+
+                Simply skip this path and continue.
+              */
+
+              return of<DataDetectionResult>({
+
+                detected: false,
+
+                endpoint: currentPath,
+
+                httpStatus: 0,
+
+                recordCount: 'N/A'
+
+              });
+
+            }),
+
+            finalize(() => {
+
+              console.log(
+
+                `Data path finished → ${backend}${currentPath}`
+
+              );
+
+            })
+
+          )
+
+          .subscribe({
+
+            next: (result: DataDetectionResult) => {
+
+              // ----------------------------------------------------
+              // SUCCESSFUL DATA DETECTION
+              // ----------------------------------------------------
+
+              if (result.detected) {
+
+                this.setDatabaseResult(
+
+                  backend,
+
+                  result
+
+                );
+
+
+
+                this.updateOverallSystemStatus();
+
+
+
+                this.checkForAllChecksSuccessful();
+
+
+
+                this.refreshView();
+
+
+
+                return;
+
+              }
+
+
+
+              // ----------------------------------------------------
+              // CURRENT PATH FAILED
+              //
+              // TRY NEXT PATH
+              // ----------------------------------------------------
+
+              tryNextPath();
+
+            },
+
+
+
+            error: () => {
+
+              tryNextPath();
+
+            }
+
+          });
+
+
+
+      this.activeSubscriptions.push(
+
+        subscription
+
+      );
+
+    };
+
+
+
+    // --------------------------------------------------------------
+    // START PATH SEARCH
+    // --------------------------------------------------------------
+
+    tryNextPath();
+
+  }
+
+
+
+  // ================================================================
+  // BUILD LIGHTWEIGHT URL
+  // ================================================================
+
+  private buildLightweightUrl(
+
+    baseUrl: string,
+
+    path: string
+
+  ): string {
+
+    const cleanBase =
+
+      baseUrl.replace(
+
+        /\/+$/,
+
+        ''
+
+      );
+
+
+
+    const cleanPath =
+
+      path.startsWith('/')
+
+        ? path
+
+        : `/${path}`;
+
+
+
+    return (
+
+      `${cleanBase}` +
+
+      `${cleanPath}` +
+
+      `${this.LIGHT_QUERY}`
+
+    );
+
+  }
+
+
+
+  // ================================================================
+  // INSPECT DATA RESPONSE
+  //
+  // IMPORTANT:
+  //
+  // We parse JSON only to determine:
+  //
+  //     - Is it valid JSON?
+  //     - Is it a collection?
+  //     - Is there count metadata?
+  //
+  // We do NOT return/store the actual response records.
+  // ================================================================
+
+  private inspectDataResponse(
+
+    httpStatus: number,
+
+    body: string | null
+
+  ): DataDetectionResult {
+
+    // --------------------------------------------------------------
+    // HTTP MUST BE 2xx
+    // --------------------------------------------------------------
+
+    if (
+
+      httpStatus < 200 ||
+
+      httpStatus >= 300
+
+    ) {
+
+      return {
+
+        detected: false,
+
+        endpoint: 'N/A',
+
+        httpStatus,
+
+        recordCount: 'N/A'
+
+      };
+
+    }
+
+
+
+    if (!body) {
+
+      return {
+
+        detected: false,
+
+        endpoint: 'N/A',
+
+        httpStatus,
+
+        recordCount: 'N/A'
+
+      };
+
+    }
+
+
+
+    // --------------------------------------------------------------
+    // PARSE JSON
+    // --------------------------------------------------------------
+
+    let parsed: any;
+
+
+
+    try {
+
+      parsed =
+        JSON.parse(body);
+
+    }
+
+    catch {
+
+      return {
+
+        detected: false,
+
+        endpoint: 'N/A',
+
+        httpStatus,
+
+        recordCount: 'N/A'
+
+      };
+
+    }
+
+
+
+    // --------------------------------------------------------------
+    // DETECT ONLY METADATA
+    // --------------------------------------------------------------
+
+    const recordCount =
+
+      this.detectRecordCount(
+
+        parsed
+
+      );
+
+
+
+    /*
+      IMPORTANT:
+
+      parsed is local only.
+
+      We do not assign parsed to a component property.
+
+      Therefore actual API records are not retained by the
+      monitoring component.
+    */
+
+    return {
+
+      detected: true,
+
+      endpoint: 'DETECTED',
+
+      httpStatus,
+
+      recordCount
+
+    };
+
+  }
+
+
+
+  // ================================================================
+  // RECORD COUNT / METADATA DETECTOR
+  // ================================================================
+
+  private detectRecordCount(
+
+    data: any
+
+  ): string {
+
+    // --------------------------------------------------------------
+    // DIRECT ARRAY
+    // --------------------------------------------------------------
+
+    if (Array.isArray(data)) {
+
+      return String(
+
+        data.length
+
+      );
+
+    }
+
+
+
+    // --------------------------------------------------------------
+    // COMMON COLLECTION PROPERTIES
+    // --------------------------------------------------------------
+
+    const collectionKeys = [
+
+      'data',
+      'results',
+      'items',
+      'users',
+      'tasks',
+      'mobiles'
+
+    ];
+
+
+
+    for (const key of collectionKeys) {
+
+      if (
+
+        data &&
+
+        Array.isArray(data[key])
+
+      ) {
+
+        return String(
+
+          data[key].length
+
+        );
+
+      }
+
+    }
+
+
+
+    // --------------------------------------------------------------
+    // COMMON METADATA COUNTS
+    // --------------------------------------------------------------
+
+    const countKeys = [
+
+      'count',
+      'total',
+      'totalElements',
+      'total_count'
+
+    ];
+
+
+
+    for (const key of countKeys) {
+
+      if (
+
+        data &&
+
+        typeof data[key] === 'number'
+
+      ) {
+
+        return String(
+
+          data[key]
+
+        );
+
+      }
+
+    }
+
+
+
+    // --------------------------------------------------------------
+    // VALID JSON BUT NO COUNT AVAILABLE
+    // --------------------------------------------------------------
+
+    return 'DATA_DETECTED';
+
+  }
+
+
+
+  // ================================================================
+  // SET SERVER STATUS
   // ================================================================
 
   private setBackendStatus(
 
-    backend:
-      'flask' |
-      'django' |
-      'fastapi' |
-      'java' |
-      'dotnet',
+    backend: BackendName,
 
     status: boolean
 
   ): void {
 
-
     switch (backend) {
-
-
-      // ============================================================
-      // FLASK
-      // ============================================================
 
       case 'flask':
 
@@ -1123,11 +1462,6 @@ export class AppComponent
         break;
 
 
-
-      // ============================================================
-      // DJANGO
-      // ============================================================
-
       case 'django':
 
         this.djangoStatus =
@@ -1135,11 +1469,6 @@ export class AppComponent
 
         break;
 
-
-
-      // ============================================================
-      // FASTAPI
-      // ============================================================
 
       case 'fastapi':
 
@@ -1149,11 +1478,6 @@ export class AppComponent
         break;
 
 
-
-      // ============================================================
-      // JAVA
-      // ============================================================
-
       case 'java':
 
         this.javaStatus =
@@ -1161,11 +1485,6 @@ export class AppComponent
 
         break;
 
-
-
-      // ============================================================
-      // .NET
-      // ============================================================
 
       case 'dotnet':
 
@@ -1181,27 +1500,163 @@ export class AppComponent
 
 
   // ================================================================
-  // MARK FIRST RESPONSE
+  // SET DATABASE STATUS
+  // ================================================================
+
+  private setDatabaseStatus(
+
+    backend: BackendName,
+
+    status: boolean
+
+  ): void {
+
+    switch (backend) {
+
+      case 'flask':
+
+        this.flaskDatabaseStatus =
+          status;
+
+        break;
+
+
+      case 'django':
+
+        this.djangoDatabaseStatus =
+          status;
+
+        break;
+
+
+      case 'fastapi':
+
+        this.fastapiDatabaseStatus =
+          status;
+
+        break;
+
+
+      case 'java':
+
+        this.javaDatabaseStatus =
+          status;
+
+        break;
+
+
+      case 'dotnet':
+
+        this.dotnetDatabaseStatus =
+          status;
+
+        break;
+
+    }
+
+  }
+
+
+
+  // ================================================================
+  // SET DATABASE RESULT
+  // ================================================================
+
+  private setDatabaseResult(
+
+    backend: BackendName,
+
+    result: DataDetectionResult
+
+  ): void {
+
+    this.setDatabaseStatus(
+
+      backend,
+
+      true
+
+    );
+
+
+
+    /*
+      Only safe metadata is retained.
+    */
+
+    switch (backend) {
+
+      case 'flask':
+
+        this.flaskDatabaseEndpoint =
+          result.endpoint;
+
+        this.flaskRecordCount =
+          result.recordCount;
+
+        break;
+
+
+      case 'django':
+
+        this.djangoDatabaseEndpoint =
+          result.endpoint;
+
+        this.djangoRecordCount =
+          result.recordCount;
+
+        break;
+
+
+      case 'fastapi':
+
+        this.fastapiDatabaseEndpoint =
+          result.endpoint;
+
+        this.fastapiRecordCount =
+          result.recordCount;
+
+        break;
+
+
+      case 'java':
+
+        this.javaDatabaseEndpoint =
+          result.endpoint;
+
+        this.javaRecordCount =
+          result.recordCount;
+
+        break;
+
+
+      case 'dotnet':
+
+        this.dotnetDatabaseEndpoint =
+          result.endpoint;
+
+        this.dotnetRecordCount =
+          result.recordCount;
+
+        break;
+
+    }
+
+  }
+
+
+
+  // ================================================================
+  // FIRST SERVER RESPONSE
   // ================================================================
 
   private markFirstResponse(
 
-    backend:
-      'flask' |
-      'django' |
-      'fastapi' |
-      'java' |
-      'dotnet'
+    backend: BackendName
 
   ): void {
 
-
     switch (backend) {
-
-
-      // ============================================================
-      // FLASK
-      // ============================================================
 
       case 'flask':
 
@@ -1211,11 +1666,6 @@ export class AppComponent
         break;
 
 
-
-      // ============================================================
-      // DJANGO
-      // ============================================================
-
       case 'django':
 
         this.djangoFirstResponse =
@@ -1223,11 +1673,6 @@ export class AppComponent
 
         break;
 
-
-
-      // ============================================================
-      // FASTAPI
-      // ============================================================
 
       case 'fastapi':
 
@@ -1237,11 +1682,6 @@ export class AppComponent
         break;
 
 
-
-      // ============================================================
-      // JAVA
-      // ============================================================
-
       case 'java':
 
         this.javaFirstResponse =
@@ -1249,11 +1689,6 @@ export class AppComponent
 
         break;
 
-
-
-      // ============================================================
-      // .NET
-      // ============================================================
 
       case 'dotnet':
 
@@ -1269,29 +1704,10 @@ export class AppComponent
 
 
   // ================================================================
-  // UPDATE OVERALL SYSTEM STATUS
+  // OVERALL SYSTEM STATUS
   // ================================================================
 
-  /*
-    YELLOW:
-
-      One or more services haven't responded.
-
-    RED:
-
-      All five responded and at least one is DOWN.
-
-    GREEN:
-
-      All five are UP.
-  */
-
   private updateOverallSystemStatus(): void {
-
-
-    // ==============================================================
-    // ALL RESPONDED
-    // ==============================================================
 
     const allResponded =
 
@@ -1307,29 +1723,7 @@ export class AppComponent
 
 
 
-    // ==============================================================
-    // ALL UP
-    // ==============================================================
-
-    const allUp =
-
-      this.flaskStatus === true &&
-
-      this.djangoStatus === true &&
-
-      this.fastapiStatus === true &&
-
-      this.javaStatus === true &&
-
-      this.dotnetStatus === true;
-
-
-
-    // ==============================================================
-    // ANY DOWN
-    // ==============================================================
-
-    const anyDown =
+    const anyServerDown =
 
       this.flaskStatus === false ||
 
@@ -1343,20 +1737,27 @@ export class AppComponent
 
 
 
-    // ==============================================================
-    // YELLOW
-    // ==============================================================
+    const anyDatabaseDown =
+
+      this.flaskDatabaseStatus === false ||
+
+      this.djangoDatabaseStatus === false ||
+
+      this.fastapiDatabaseStatus === false ||
+
+      this.javaDatabaseStatus === false ||
+
+      this.dotnetDatabaseStatus === false;
+
+
 
     if (!allResponded) {
-
 
       this.systemStatus =
         '🟡 Checking / Waking Services...';
 
-
       this.statusColor =
         'yellow-status';
-
 
       return;
 
@@ -1364,20 +1765,19 @@ export class AppComponent
 
 
 
-    // ==============================================================
-    // RED
-    // ==============================================================
+    if (
 
-    if (anyDown) {
+      anyServerDown ||
 
+      anyDatabaseDown
+
+    ) {
 
       this.systemStatus =
         '🔴 System Offline / Degraded';
 
-
       this.statusColor =
         'red-status';
-
 
       return;
 
@@ -1385,34 +1785,22 @@ export class AppComponent
 
 
 
-    // ==============================================================
-    // GREEN
-    // ==============================================================
-
-    if (allUp) {
-
+    if (this.allChecksSuccessful) {
 
       this.systemStatus =
-        '🟢 System Ready / All Services Live';
-
+        '🟢 System Ready / All Services + Data Live';
 
       this.statusColor =
         'green-status';
 
-
       return;
 
     }
 
 
 
-    // ==============================================================
-    // FALLBACK
-    // ==============================================================
-
     this.systemStatus =
-      '🟡 Checking / Waking Services...';
-
+      '🟡 Detecting Database/Data...';
 
     this.statusColor =
       'yellow-status';
@@ -1422,29 +1810,16 @@ export class AppComponent
 
 
   // ================================================================
-  // CHECK FOR ALL SERVICES LIVE
+  // CHECK ALL 10 COMPONENTS
+  //
+  // Required:
+  //
+  //     5 servers UP
+  //     +
+  //     5 databases/data layers UP
   // ================================================================
 
-  /*
-    This runs after EVERY backend response.
-
-    Required state:
-
-        Flask    = true
-        Django   = true
-        FastAPI  = true
-        Java     = true
-        .NET     = true
-
-    Only then does the final countdown begin.
-  */
-
-  private checkForAllServicesLive(): void {
-
-
-    // ==============================================================
-    // DESTROYED
-    // ==============================================================
+  private checkForAllChecksSuccessful(): void {
 
     if (this.destroyed) {
 
@@ -1454,10 +1829,6 @@ export class AppComponent
 
 
 
-    // ==============================================================
-    // ALREADY TRIGGERED
-    // ==============================================================
-
     if (this.finalSuccessTriggered) {
 
       return;
@@ -1466,11 +1837,82 @@ export class AppComponent
 
 
 
-    // ==============================================================
-    // CHECK ALL FIVE
-    // ==============================================================
+    if (!this.allChecksSuccessful) {
 
-    const allServicesUp =
+      return;
+
+    }
+
+
+
+    console.log(
+
+      '================================================'
+
+    );
+
+
+    console.log(
+
+      '🟢🟢🟢 ALL 5 SERVERS + ALL 5 DATA LAYERS ARE LIVE 🟢🟢🟢'
+
+    );
+
+
+    console.log(
+
+      '================================================'
+
+    );
+
+
+
+    this.finalSuccessTriggered =
+      true;
+
+
+
+    this.systemStatus =
+      '🟢 System Ready / All Services + Data Live';
+
+
+
+    this.statusColor =
+      'green-status';
+
+
+
+    // --------------------------------------------------------------
+    // Stop maximum timer.
+    //
+    // Normal successful completion does NOT wait 10 minutes.
+    // --------------------------------------------------------------
+
+    this.stopMaximumMonitoringTimer();
+
+
+
+    // --------------------------------------------------------------
+    // Start 5-second final countdown.
+    // --------------------------------------------------------------
+
+    this.startFinalCountdown();
+
+
+
+    this.refreshView();
+
+  }
+
+
+
+  // ================================================================
+  // ALL CHECKS SUCCESSFUL
+  // ================================================================
+
+  get allChecksSuccessful(): boolean {
+
+    return (
 
       this.flaskStatus === true &&
 
@@ -1480,89 +1922,252 @@ export class AppComponent
 
       this.javaStatus === true &&
 
-      this.dotnetStatus === true;
+      this.dotnetStatus === true &&
+
+
+      this.flaskDatabaseStatus === true &&
+
+      this.djangoDatabaseStatus === true &&
+
+      this.fastapiDatabaseStatus === true &&
+
+      this.javaDatabaseStatus === true &&
+
+      this.dotnetDatabaseStatus === true
+
+    );
+
+  }
 
 
 
-    // ==============================================================
-    // NOT ALL UP
-    // ==============================================================
+  // ================================================================
+  // ALL CHECKS RUNNING
+  // ================================================================
 
-    if (!allServicesUp) {
+  get allChecksRunning(): boolean {
 
-      return;
+    return (
+
+      this.respondedBackendCount === 5 &&
+
+      this.detectedDatabaseCount === 5
+
+    );
+
+  }
+
+
+
+  // ================================================================
+  // RESPONDED SERVER COUNT
+  // ================================================================
+
+  get respondedBackendCount(): number {
+
+    let count =
+      0;
+
+
+
+    if (this.flaskFirstResponse) {
+
+      count++;
+
+    }
+
+
+    if (this.djangoFirstResponse) {
+
+      count++;
+
+    }
+
+
+    if (this.fastapiFirstResponse) {
+
+      count++;
+
+    }
+
+
+    if (this.javaFirstResponse) {
+
+      count++;
+
+    }
+
+
+    if (this.dotnetFirstResponse) {
+
+      count++;
 
     }
 
 
 
-    // ==============================================================
-    // ALL FIVE ARE LIVE
-    // ==============================================================
+    return count;
 
-    console.log(
-
-      '================================================'
-
-    );
-
-    console.log(
-
-      '🟢🟢🟢 ALL FIVE BACKENDS ARE LIVE 🟢🟢🟢'
-
-    );
-
-    console.log(
-
-      '================================================'
-
-    );
+  }
 
 
 
-    // ==============================================================
-    // MARK SUCCESS
-    // ==============================================================
+  // ================================================================
+  // DATABASE DETECTED COUNT
+  // ================================================================
 
-    this.finalSuccessTriggered =
-      true;
+  get detectedDatabaseCount(): number {
 
-
-
-    // ==============================================================
-    // GREEN STATUS
-    // ==============================================================
-
-    this.systemStatus =
-      '🟢 System Ready / All Services Live';
-
-
-    this.statusColor =
-      'green-status';
+    let count =
+      0;
 
 
 
-    // ==============================================================
-    // STOP TEN-MINUTE TIMER
-    // ==============================================================
+    if (this.flaskDatabaseStatus === true) {
 
-    this.stopMaximumMonitoringTimer();
+      count++;
 
-
-
-    // ==============================================================
-    // START FINAL COUNTDOWN
-    // ==============================================================
-
-    this.startFinalCountdown();
+    }
 
 
+    if (this.djangoDatabaseStatus === true) {
 
-    // ==============================================================
-    // REFRESH
-    // ==============================================================
+      count++;
 
-    this.refreshView();
+    }
+
+
+    if (this.fastapiDatabaseStatus === true) {
+
+      count++;
+
+    }
+
+
+    if (this.javaDatabaseStatus === true) {
+
+      count++;
+
+    }
+
+
+    if (this.dotnetDatabaseStatus === true) {
+
+      count++;
+
+    }
+
+
+
+    return count;
+
+  }
+
+
+
+  // ================================================================
+  // BACKEND DOT CLASS
+  // ================================================================
+
+  getBackendDotClass(
+
+    serverStatus: BackendStatus,
+
+    databaseStatus: BackendStatus
+
+  ): string {
+
+    if (serverStatus === null) {
+
+      return 'dot-yellow';
+
+    }
+
+
+
+    if (
+
+      serverStatus === true &&
+
+      databaseStatus === true
+
+    ) {
+
+      return 'dot-green';
+
+    }
+
+
+
+    if (
+
+      serverStatus === true &&
+
+      databaseStatus === null
+
+    ) {
+
+      return 'dot-yellow';
+
+    }
+
+
+
+    return 'dot-red';
+
+  }
+
+
+
+  // ================================================================
+  // COMBINED STATUS CLASS
+  // ================================================================
+
+  getCombinedStatusClass(
+
+    serverStatus: BackendStatus,
+
+    databaseStatus: BackendStatus
+
+  ): string {
+
+    if (serverStatus === null) {
+
+      return 'backend-checking';
+
+    }
+
+
+
+    if (
+
+      serverStatus === true &&
+
+      databaseStatus === true
+
+    ) {
+
+      return 'backend-up';
+
+    }
+
+
+
+    if (
+
+      serverStatus === true &&
+
+      databaseStatus === null
+
+    ) {
+
+      return 'backend-checking';
+
+    }
+
+
+
+    return 'backend-down';
 
   }
 
@@ -1572,96 +2177,42 @@ export class AppComponent
   // START FINAL COUNTDOWN
   // ================================================================
 
-  /*
-        ALL FIVE UP
-             ↓
-        🟢 ALL LIVE
-             ↓
-             5
-             ↓
-             4
-             ↓
-             3
-             ↓
-             2
-             ↓
-             1
-             ↓
-           HIDE
-  */
-
   private startFinalCountdown(): void {
-
-
-    // ==============================================================
-    // STOP EXISTING COUNTDOWN
-    // ==============================================================
 
     this.stopCountdown();
 
 
-
-    // ==============================================================
-    // SHOW POPUP
-    // ==============================================================
 
     this.showSystemStatus =
       true;
 
 
 
-    // ==============================================================
-    // SET COUNTDOWN
-    // ==============================================================
-
     this.countdown =
       this.COUNTDOWN_SECONDS;
 
 
-
-    // ==============================================================
-    // ENABLE COUNTDOWN
-    // ==============================================================
 
     this.countdownRunning =
       true;
 
 
 
-    // ==============================================================
-    // SET COLOR
-    // ==============================================================
-
     this.updateCountdownColor();
 
 
-
-    // ==============================================================
-    // REFRESH
-    // ==============================================================
 
     this.refreshView();
 
 
 
-    // ==============================================================
-    // START INTERVAL
-    // ==============================================================
-
     this.countdownTimer =
 
       setInterval(() => {
 
-
-        // ==========================================================
-        // COMPONENT DESTROYED
-        // ==========================================================
-
         if (this.destroyed) {
 
-
           this.stopCountdown();
-
 
           return;
 
@@ -1669,59 +2220,30 @@ export class AppComponent
 
 
 
-        // ==========================================================
-        // DECREASE
-        // ==========================================================
-
         this.countdown--;
 
 
 
-        // ==========================================================
-        // FINISHED
-        // ==========================================================
-
         if (this.countdown <= 0) {
-
-
-          // --------------------------------------------------------
-          // STOP TIMER
-          // --------------------------------------------------------
 
           this.stopCountdown();
 
 
-
-          // --------------------------------------------------------
-          // COUNTDOWN OFF
-          // --------------------------------------------------------
 
           this.countdownRunning =
             false;
 
 
 
-          // --------------------------------------------------------
-          // KEEP ZERO
-          // --------------------------------------------------------
-
           this.countdown =
             0;
 
 
 
-          // --------------------------------------------------------
-          // HIDE POPUP
-          // --------------------------------------------------------
-
           this.showSystemStatus =
             false;
 
 
-
-          // --------------------------------------------------------
-          // REFRESH
-          // --------------------------------------------------------
 
           this.refreshView();
 
@@ -1729,9 +2251,10 @@ export class AppComponent
 
           console.log(
 
-            '✅ Backend health popup automatically closed.'
+            '✅ Backend + database health popup automatically closed.'
 
           );
+
 
 
           return;
@@ -1740,20 +2263,11 @@ export class AppComponent
 
 
 
-        // ==========================================================
-        // UPDATE COLOR
-        // ==========================================================
-
         this.updateCountdownColor();
 
 
 
-        // ==========================================================
-        // REFRESH
-        // ==========================================================
-
         this.refreshView();
-
 
       }, 1000);
 
@@ -1762,18 +2276,12 @@ export class AppComponent
 
 
   // ================================================================
-  // UPDATE COUNTDOWN COLOR
+  // COUNTDOWN COLOR
   // ================================================================
 
   private updateCountdownColor(): void {
 
-
     switch (this.countdown) {
-
-
-      // ============================================================
-      // 5
-      // ============================================================
 
       case 5:
 
@@ -1783,11 +2291,6 @@ export class AppComponent
         break;
 
 
-
-      // ============================================================
-      // 4
-      // ============================================================
-
       case 4:
 
         this.countdownColor =
@@ -1795,11 +2298,6 @@ export class AppComponent
 
         break;
 
-
-
-      // ============================================================
-      // 3
-      // ============================================================
 
       case 3:
 
@@ -1809,11 +2307,6 @@ export class AppComponent
         break;
 
 
-
-      // ============================================================
-      // 2
-      // ============================================================
-
       case 2:
 
         this.countdownColor =
@@ -1822,11 +2315,6 @@ export class AppComponent
         break;
 
 
-
-      // ============================================================
-      // 1
-      // ============================================================
-
       case 1:
 
         this.countdownColor =
@@ -1834,11 +2322,6 @@ export class AppComponent
 
         break;
 
-
-
-      // ============================================================
-      // DEFAULT
-      // ============================================================
 
       default:
 
@@ -1854,14 +2337,91 @@ export class AppComponent
 
 
   // ================================================================
+  // START 10-MINUTE MAXIMUM WINDOW
+  // ================================================================
+
+  private startMaximumMonitoringTimer(): void {
+
+    if (this.monitoringStarted) {
+
+      return;
+
+    }
+
+
+
+    this.monitoringStarted =
+      true;
+
+
+
+    this.maximumMonitoringTimer =
+
+      setTimeout(() => {
+
+        if (this.destroyed) {
+
+          return;
+
+        }
+
+
+
+        if (this.finalSuccessTriggered) {
+
+          return;
+
+        }
+
+
+
+        console.warn(
+
+          '⏰ Maximum 10-minute monitoring window reached.'
+
+        );
+
+
+
+        this.systemStatus =
+          '🔴 Monitoring timeout reached';
+
+
+
+        this.statusColor =
+          'red-status';
+
+
+
+        this.stopCountdown();
+
+
+
+        this.countdownRunning =
+          false;
+
+
+
+        this.showSystemStatus =
+          false;
+
+
+
+        this.refreshView();
+
+      }, this.MAX_MONITORING_TIME_MS);
+
+  }
+
+
+
+  // ================================================================
   // STOP COUNTDOWN
   // ================================================================
 
   private stopCountdown(): void {
 
-
     if (this.countdownTimer) {
-
 
       clearInterval(
 
@@ -1880,14 +2440,12 @@ export class AppComponent
 
 
   // ================================================================
-  // STOP MAXIMUM MONITORING TIMER
+  // STOP MAXIMUM TIMER
   // ================================================================
 
   private stopMaximumMonitoringTimer(): void {
 
-
     if (this.maximumMonitoringTimer) {
-
 
       clearTimeout(
 
@@ -1911,134 +2469,10 @@ export class AppComponent
 
 
   // ================================================================
-  // RESPONDED BACKEND COUNT
-  // ================================================================
-
-  /*
-    Examples:
-
-        0 / 5
-
-        1 / 5
-
-        2 / 5
-
-        3 / 5
-
-        4 / 5
-
-        5 / 5
-  */
-
-  get respondedBackendCount(): number {
-
-
-    let count =
-      0;
-
-
-
-    // ==============================================================
-    // FLASK
-    // ==============================================================
-
-    if (this.flaskFirstResponse) {
-
-      count++;
-
-    }
-
-
-
-    // ==============================================================
-    // DJANGO
-    // ==============================================================
-
-    if (this.djangoFirstResponse) {
-
-      count++;
-
-    }
-
-
-
-    // ==============================================================
-    // FASTAPI
-    // ==============================================================
-
-    if (this.fastapiFirstResponse) {
-
-      count++;
-
-    }
-
-
-
-    // ==============================================================
-    // JAVA
-    // ==============================================================
-
-    if (this.javaFirstResponse) {
-
-      count++;
-
-    }
-
-
-
-    // ==============================================================
-    // .NET
-    // ==============================================================
-
-    if (this.dotnetFirstResponse) {
-
-      count++;
-
-    }
-
-
-
-    return count;
-
-  }
-
-
-
-  // ================================================================
-  // ALL SERVICES RUNNING
-  // ================================================================
-
-  /*
-    TRUE only when all five services are UP.
-  */
-
-  get allServicesRunning(): boolean {
-
-
-    return (
-
-      this.flaskStatus === true &&
-
-      this.djangoStatus === true &&
-
-      this.fastapiStatus === true &&
-
-      this.javaStatus === true &&
-
-      this.dotnetStatus === true
-
-    );
-
-  }
-
-
-
-  // ================================================================
-  // ANGULAR VIEW REFRESH
+  // REFRESH VIEW
   // ================================================================
 
   private refreshView(): void {
-
 
     if (this.destroyed) {
 
@@ -2055,54 +2489,27 @@ export class AppComponent
 
 
   // ================================================================
-  // COMPONENT DESTROY
+  // DESTROY
   // ================================================================
 
-  /*
-    Cleanup:
-
-        1. Stop countdown.
-        2. Stop 10-minute timer.
-        3. Cancel HTTP subscriptions.
-        4. Prevent future callbacks.
-  */
-
   ngOnDestroy(): void {
-
-
-    // ==============================================================
-    // MARK DESTROYED
-    // ==============================================================
 
     this.destroyed =
       true;
 
 
 
-    // ==============================================================
-    // STOP COUNTDOWN
-    // ==============================================================
-
     this.stopCountdown();
 
 
-
-    // ==============================================================
-    // STOP SAFETY TIMER
-    // ==============================================================
 
     this.stopMaximumMonitoringTimer();
 
 
 
-    // ==============================================================
-    // CANCEL HTTP REQUESTS
-    // ==============================================================
-
     this.activeSubscriptions.forEach(
 
       (subscription) => {
-
 
         subscription.unsubscribe();
 
@@ -2112,22 +2519,14 @@ export class AppComponent
 
 
 
-    // ==============================================================
-    // CLEAR SUBSCRIPTIONS
-    // ==============================================================
-
     this.activeSubscriptions =
       [];
 
 
 
-    // ==============================================================
-    // DEBUG
-    // ==============================================================
-
     console.log(
 
-      '🧹 Backend health monitoring cleaned up.'
+      '🧹 Backend + database monitoring cleaned up.'
 
     );
 

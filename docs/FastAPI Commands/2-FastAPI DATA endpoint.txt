@@ -1,0 +1,36 @@
+$url = "https://fastapi-rest-api.onrender.com/mobiles"
+
+Write-Host "========================================"
+Write-Host "FASTAPI DATA TEST"
+Write-Host "========================================"
+Write-Host "URL: $url"
+Write-Host ""
+
+try {
+    $response = Invoke-WebRequest -Uri $url -Method GET -TimeoutSec 30
+
+    Write-Host "HTTP STATUS : $($response.StatusCode)"
+
+    if ($response.StatusCode -ge 200 -and $response.StatusCode -lt 300) {
+
+        if ($response.Content -and $response.Content.Trim().Length -gt 0) {
+            Write-Host "DATA        : DETECTED"
+            Write-Host ""
+            Write-Host "Response:"
+            Write-Host $response.Content
+        }
+        else {
+            Write-Host "DATA        : NOT DETECTED"
+        }
+    }
+    else {
+        Write-Host "DATA        : NOT DETECTED"
+    }
+
+    Write-Host "========================================"
+}
+catch {
+    Write-Host "DATA        : NOT DETECTED"
+    Write-Host "ERROR       : $($_.Exception.Message)"
+    Write-Host "========================================"
+}

@@ -1,0 +1,21 @@
+$url = "https://fastapi-rest-api.onrender.com/"
+
+Write-Host "========================================"
+Write-Host "FASTAPI SERVER TEST"
+Write-Host "========================================"
+Write-Host "URL: $url"
+Write-Host ""
+
+try {
+    $response = Invoke-WebRequest -Uri $url -Method GET -TimeoutSec 30
+
+    Write-Host "HTTP STATUS : $($response.StatusCode)"
+    Write-Host "SERVER      : UP"
+    Write-Host "DATA        : DETECTED"
+    Write-Host "========================================"
+}
+catch {
+    Write-Host "SERVER      : DOWN / ERROR"
+    Write-Host "ERROR       : $($_.Exception.Message)"
+    Write-Host "========================================"
+}

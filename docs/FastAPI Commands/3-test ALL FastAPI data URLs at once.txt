@@ -1,0 +1,45 @@
+$urls = @(
+    "https://fastapi-rest-api.onrender.com/mobiles",
+    "https://fastapi-rest-api.onrender.com/api/mobiles",
+    "https://fastapi-rest-api.onrender.com/api/mobile",
+    "https://fastapi-rest-api.onrender.com/mobile"
+)
+
+Write-Host "========================================"
+Write-Host "FASTAPI DATA ENDPOINT TEST"
+Write-Host "========================================"
+
+foreach ($url in $urls) {
+
+    Write-Host ""
+    Write-Host "URL: $url"
+
+    try {
+        $response = Invoke-WebRequest `
+            -Uri $url `
+            -Method GET `
+            -TimeoutSec 30
+
+        Write-Host "HTTP STATUS : $($response.StatusCode)"
+
+        if (
+            $response.StatusCode -ge 200 -and
+            $response.StatusCode -lt 300 -and
+            $response.Content -and
+            $response.Content.Trim().Length -gt 0
+        ) {
+            Write-Host "DATA        : DETECTED"
+        }
+        else {
+            Write-Host "DATA        : NOT DETECTED"
+        }
+    }
+    catch {
+        Write-Host "DATA        : NOT DETECTED"
+        Write-Host "ERROR       : $($_.Exception.Message)"
+    }
+
+    Write-Host "----------------------------------------"
+}
+
+Write-Host "========================================"

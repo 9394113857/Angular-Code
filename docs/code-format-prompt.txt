@@ -1,0 +1,26 @@
+Give me the FULL ORIGINAL FILE exactly as provided.
+
+STRICT RULES:
+1. Do NOT change any code or content.
+2. Do NOT fix, rewrite, optimize, simplify, refactor, or improve anything.
+3. Preserve the original comments, blank lines, spacing, indentation, order, names, logic, and structure exactly.
+4. Only format it as a normal VS Code code block.
+5. Give the COMPLETE file from the first line to the last line.
+6. Do NOT omit, summarize, or replace any part with "...".
+7. Do NOT add anything that was not in the original file.
+8. Do NOT remove anything from the original file.
+9. Use ONLY a pure fenced code block.
+10. Do NOT add any id, metadata, attributes, or anything after the language name in the opening fence.
+11. No explanation before the code.
+12. No explanation after the code.
+
+For TypeScript use:
+```typescript
+
+For HTML use:
+```html
+
+For CSS use:
+```css
+
+IMPORTANT: I want the ORIGINAL FILE, NOT a recreated or modified version. ONLY VS CODE CODE-BLOCK FORMATTING.

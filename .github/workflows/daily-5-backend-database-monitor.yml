@@ -1,0 +1,858 @@
+
+# ============================================================
+# 🚀 DAILY RUNTIME MONITOR - 5 BACKENDS + 5 DATABASES
+#
+# Schedule:
+#       Daily at 6:00 AM IST
+#
+# Triggers:
+#       ✅ Daily scheduled trigger
+#       ✅ Manual workflow_dispatch
+#
+# Monitoring:
+#       ✅ Flask Server + Database
+#       ✅ Django Server + Database
+#       ✅ FastAPI Server + Database
+#       ✅ Java Server + Database
+#       ✅ .NET Server + Database
+#
+# Features:
+#       ✅ All 5 backends checked in parallel
+#       ✅ Lightweight GET requests
+#       ✅ Database/data endpoint detection
+#       ✅ HTTP status detection
+#       ✅ Response time measurement
+#       ✅ Record count detection
+#       ✅ GitHub Actions dashboard
+#       ✅ JSON runtime artifacts
+#       ✅ Actual records never printed or stored
+#
+# No Email
+# No CI
+# No CD
+# No Docker
+# No Database Writes
+#
+# ============================================================
+
+name: 🚀 Daily 5 Backend + Database Monitor
+
+# ============================================================
+# EVENTS
+# ============================================================
+
+on:
+
+  # 6:00 AM IST = 00:30 UTC
+
+  schedule:
+    - cron: "30 0 * * *"
+
+  workflow_dispatch:
+
+# ============================================================
+# PERMISSIONS
+# ============================================================
+
+permissions:
+  contents: read
+
+# ============================================================
+# JOBS
+# ============================================================
+
+jobs:
+
+  wake-and-detect:
+
+    name: 🔥 Monitor 5 Servers + 5 Databases
+
+    runs-on: ubuntu-latest
+
+    timeout-minutes: 25
+
+    steps:
+
+      # ======================================================
+      # STEP 1: INITIALIZE
+      # ======================================================
+
+      - name: 🚀 Initialize Runtime Monitor
+
+        shell: bash
+
+        run: |
+
+          set -u
+
+          mkdir -p runtime-results
+
+          echo "================================================"
+          echo "🚀 DAILY RUNTIME MONITOR"
+          echo "================================================"
+
+          echo "Trigger: ${{ github.event_name }}"
+          echo "Schedule: Daily at 6:00 AM IST"
+          echo "Servers: 5"
+          echo "Databases: 5"
+          echo "Total Components: 10"
+
+          echo "HTTP Method: GET"
+          echo "Data Mode: Lightweight"
+          echo "Records: Hidden"
+
+          echo "================================================"
+
+          {
+            echo "# 🚀 Daily Runtime Monitor"
+            echo ""
+            echo "### Runtime Status"
+            echo ""
+            echo "| # | Backend | Server | Database/Data | HTTP | Data | Records | Time |"
+            echo "|---:|---|---|---|---:|---|---:|---:|"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # ======================================================
+      # STEP 2: WAKE AND DETECT ALL BACKENDS
+      # ======================================================
+
+      - name: 🔥 Wake And Detect All 5 Backends
+
+        shell: bash
+
+        run: |
+
+          set +e
+
+          # --------------------------------------------------
+          # BACKEND URLS
+          # --------------------------------------------------
+
+          FLASK_BASE="https://flask-restapi-tzdm.onrender.com"
+
+          DJANGO_BASE="https://django-restapi-r7yj.onrender.com"
+
+          FASTAPI_BASE="https://fastapi-rest-api.onrender.com"
+
+          JAVA_BASE="https://java-springboot-user-backend.onrender.com"
+
+          DOTNET_BASE="https://dotnet-user-service-latest.onrender.com"
+
+          # --------------------------------------------------
+          # DATABASE / DATA ENDPOINTS
+          # --------------------------------------------------
+
+          FLASK_PATHS=(
+            "/api/mobiles"
+            "/mobiles"
+            "/api/mobile"
+            "/mobile"
+          )
+
+          DJANGO_PATHS=(
+            "/api/tasks"
+          )
+
+          FASTAPI_PATHS=(
+            "/mobiles"
+            "/api/mobiles"
+            "/api/mobile"
+            "/mobile"
+          )
+
+          JAVA_PATHS=(
+            "/api/users"
+          )
+
+          DOTNET_PATHS=(
+            "/api/users"
+            "/users"
+            "/api/user"
+            "/user"
+          )
+
+          LIGHT_QUERY="?limit=1"
+
+          # --------------------------------------------------
+          # INITIALIZE RESULT DIRECTORY
+          # --------------------------------------------------
+
+          mkdir -p runtime-results
+
+          # ==================================================
+          # FUNCTION 1: SERVER CHECK
+          # ==================================================
+
+          check_server() {
+
+            local BASE="$1"
+            local OUTPUT="$2"
+
+            local BODY
+            local ERROR
+            local HTTP
+            local CURL_CODE
+            local START
+            local END
+            local TIME
+            local STATUS
+
+            BODY=$(mktemp)
+            ERROR=$(mktemp)
+
+            START=$(date +%s%3N)
+
+            HTTP=$(curl \
+              --silent \
+              --show-error \
+              --location \
+              --max-time 60 \
+              --connect-timeout 15 \
+              --output "$BODY" \
+              --write-out "%{http_code}" \
+              "$BASE/" \
+              2>"$ERROR")
+
+            CURL_CODE=$?
+
+            END=$(date +%s%3N)
+
+            TIME=$((END - START))
+
+            if [ "$CURL_CODE" -eq 0 ] && \
+               [ "$HTTP" -ge 100 ] && \
+               [ "$HTTP" -lt 600 ]; then
+
+              STATUS="UP"
+
+            else
+
+              STATUS="DOWN"
+
+            fi
+
+            echo "$STATUS|$HTTP|$TIME" > "$OUTPUT"
+
+            rm -f "$BODY" "$ERROR"
+
+          }
+
+          # ==================================================
+          # FUNCTION 2: DATABASE / DATA CHECK
+          # ==================================================
+
+          check_database() {
+
+            local BASE="$1"
+            local TYPE="$2"
+            local OUTPUT="$3"
+
+            local -a PATHS
+
+            case "$TYPE" in
+
+              FLASK)
+                PATHS=("${FLASK_PATHS[@]}")
+                ;;
+
+              DJANGO)
+                PATHS=("${DJANGO_PATHS[@]}")
+                ;;
+
+              FASTAPI)
+                PATHS=("${FASTAPI_PATHS[@]}")
+                ;;
+
+              JAVA)
+                PATHS=("${JAVA_PATHS[@]}")
+                ;;
+
+              DOTNET)
+                PATHS=("${DOTNET_PATHS[@]}")
+                ;;
+
+              *)
+                echo "DOWN|NO|N/A|000|N/A|0" > "$OUTPUT"
+                return
+                ;;
+
+            esac
+
+            local DB_STATUS="DOWN"
+            local DATA_DETECTED="NO"
+            local FOUND_PATH="N/A"
+            local HTTP="000"
+            local RECORDS="N/A"
+            local DATA_TIME="0"
+
+            local BODY
+            local ERROR
+            local CURRENT_HTTP
+            local CURL_CODE
+            local START
+            local END
+            local REQUEST_TIME
+
+            # ----------------------------------------------
+            # TRY CONFIGURED DATA ENDPOINTS
+            # ----------------------------------------------
+
+            for PATH_VALUE in "${PATHS[@]}"; do
+
+              BODY=$(mktemp)
+              ERROR=$(mktemp)
+
+              echo "Checking $TYPE endpoint: $PATH_VALUE"
+
+              START=$(date +%s%3N)
+
+              CURRENT_HTTP=$(curl \
+                --silent \
+                --show-error \
+                --location \
+                --max-time 60 \
+                --connect-timeout 15 \
+                --output "$BODY" \
+                --write-out "%{http_code}" \
+                "${BASE}${PATH_VALUE}${LIGHT_QUERY}" \
+                2>"$ERROR")
+
+              CURL_CODE=$?
+
+              END=$(date +%s%3N)
+
+              REQUEST_TIME=$((END - START))
+
+              # --------------------------------------------
+              # SUCCESSFUL HTTP RESPONSE
+              # --------------------------------------------
+
+              if [ "$CURL_CODE" -eq 0 ] && \
+                 [ "$CURRENT_HTTP" -ge 200 ] && \
+                 [ "$CURRENT_HTTP" -lt 300 ]; then
+
+                # ------------------------------------------
+                # VALID JSON CHECK
+                # ------------------------------------------
+
+                if jq empty "$BODY" >/dev/null 2>&1; then
+
+                  DB_STATUS="UP"
+
+                  DATA_DETECTED="YES"
+
+                  FOUND_PATH="$PATH_VALUE"
+
+                  HTTP="$CURRENT_HTTP"
+
+                  DATA_TIME="$REQUEST_TIME"
+
+                  # ----------------------------------------
+                  # DETECT RECORD COUNT / METADATA
+                  # ----------------------------------------
+
+                  RECORDS=$(jq -r '
+
+                    if type == "array" then
+                      length
+
+                    elif (.data? | type) == "array" then
+                      .data | length
+
+                    elif (.results? | type) == "array" then
+                      .results | length
+
+                    elif (.items? | type) == "array" then
+                      .items | length
+
+                    elif (.users? | type) == "array" then
+                      .users | length
+
+                    elif (.tasks? | type) == "array" then
+                      .tasks | length
+
+                    elif (.mobiles? | type) == "array" then
+                      .mobiles | length
+
+                    elif (.count? | type) == "number" then
+                      .count
+
+                    elif (.total? | type) == "number" then
+                      .total
+
+                    elif (.totalElements? | type) == "number" then
+                      .totalElements
+
+                    elif (.total_count? | type) == "number" then
+                      .total_count
+
+                    else
+                      "DATA_DETECTED"
+                    end
+
+                  ' "$BODY" 2>/dev/null)
+
+                  if [ -z "$RECORDS" ]; then
+                    RECORDS="DATA_DETECTED"
+                  fi
+
+                  rm -f "$BODY" "$ERROR"
+
+                  break
+
+                fi
+
+              fi
+
+              rm -f "$BODY" "$ERROR"
+
+            done
+
+            # ----------------------------------------------
+            # SAVE SAFE METADATA ONLY
+            # ----------------------------------------------
+
+            echo "$DB_STATUS|$DATA_DETECTED|$FOUND_PATH|$HTTP|$RECORDS|$DATA_TIME" \
+              > "$OUTPUT"
+
+          }
+
+          # ==================================================
+          # FUNCTION 3: COMPLETE BACKEND CHECK
+          # ==================================================
+
+          check_backend() {
+
+            local NUMBER="$1"
+            local NAME="$2"
+            local BASE="$3"
+            local TYPE="$4"
+
+            local SERVER_RESULT
+            local DATABASE_RESULT
+            local JSON_RESULT
+
+            SERVER_RESULT="runtime-results/${TYPE,,}-server.txt"
+
+            DATABASE_RESULT="runtime-results/${TYPE,,}-database.txt"
+
+            JSON_RESULT="runtime-results/${TYPE,,}.json"
+
+            echo ""
+            echo "================================================"
+            echo "[$NUMBER/5] $NAME"
+            echo "================================================"
+
+            echo "Server URL: $BASE"
+
+            # ----------------------------------------------
+            # SERVER CHECK
+            # ----------------------------------------------
+
+            check_server "$BASE" "$SERVER_RESULT"
+
+            # ----------------------------------------------
+            # DATABASE / DATA CHECK
+            # ----------------------------------------------
+
+            check_database "$BASE" "$TYPE" "$DATABASE_RESULT"
+
+            # ----------------------------------------------
+            # READ SERVER RESULT
+            # ----------------------------------------------
+
+            IFS='|' read -r \
+              SERVER_STATUS \
+              SERVER_HTTP \
+              SERVER_TIME \
+              < "$SERVER_RESULT"
+
+            # ----------------------------------------------
+            # READ DATABASE RESULT
+            # ----------------------------------------------
+
+            IFS='|' read -r \
+              DB_STATUS \
+              DATA_DETECTED \
+              FOUND_PATH \
+              DB_HTTP \
+              RECORDS \
+              DB_TIME \
+              < "$DATABASE_RESULT"
+
+            # ----------------------------------------------
+            # SERVER STATUS ICON
+            # ----------------------------------------------
+
+            if [ "$SERVER_STATUS" = "UP" ]; then
+              SERVER_ICON="🟢"
+            else
+              SERVER_ICON="🔴"
+            fi
+
+            # ----------------------------------------------
+            # DATABASE STATUS ICON
+            # ----------------------------------------------
+
+            if [ "$DB_STATUS" = "UP" ]; then
+              DB_ICON="🟢"
+            else
+              DB_ICON="🔴"
+            fi
+
+            # ----------------------------------------------
+            # SERVER DOWN HANDLING
+            # ----------------------------------------------
+
+            if [ "$SERVER_STATUS" = "DOWN" ]; then
+
+              DB_STATUS="DOWN"
+              DB_ICON="🔴"
+              DATA_DETECTED="NO"
+
+            fi
+
+            # ----------------------------------------------
+            # OVERALL STATUS
+            # ----------------------------------------------
+
+            if [ "$SERVER_STATUS" = "UP" ] && \
+               [ "$DB_STATUS" = "UP" ]; then
+
+              OVERALL="UP + DATA DETECTED"
+              OVERALL_ICON="🟢"
+
+            elif [ "$SERVER_STATUS" = "UP" ] && \
+                 [ "$DB_STATUS" = "DOWN" ]; then
+
+              OVERALL="SERVER UP / DATABASE DOWN"
+              OVERALL_ICON="🟡"
+
+            else
+
+              OVERALL="SERVER DOWN"
+              OVERALL_ICON="🔴"
+
+            fi
+
+            TOTAL_TIME=$((SERVER_TIME + DB_TIME))
+
+            # ----------------------------------------------
+            # CONSOLE REPORT
+            # ----------------------------------------------
+
+            echo ""
+            echo "BACKEND: $NAME"
+            echo "SERVER: $SERVER_ICON $SERVER_STATUS"
+            echo "SERVER HTTP: $SERVER_HTTP"
+            echo "DATABASE: $DB_ICON $DB_STATUS"
+            echo "DATA DETECTED: $DATA_DETECTED"
+            echo "DATABASE HTTP: $DB_HTTP"
+            echo "RECORD COUNT: $RECORDS"
+            echo "ENDPOINT: $FOUND_PATH"
+            echo "RESPONSE TIME: ${TOTAL_TIME}ms"
+            echo "OVERALL: $OVERALL"
+            echo "RECORD CONTENT: HIDDEN"
+
+            # ----------------------------------------------
+            # SAVE SAFE JSON METADATA
+            # ----------------------------------------------
+
+            jq -n \
+              --arg backend "$NAME" \
+              --arg base_url "$BASE" \
+              --arg server_status "$SERVER_STATUS" \
+              --arg database_status "$DB_STATUS" \
+              --arg data_detected "$DATA_DETECTED" \
+              --arg endpoint "$FOUND_PATH" \
+              --arg records "$RECORDS" \
+              --arg overall "$OVERALL" \
+              --argjson server_http "${SERVER_HTTP:-0}" \
+              --argjson database_http "${DB_HTTP:-0}" \
+              --argjson server_time "${SERVER_TIME:-0}" \
+              --argjson database_time "${DB_TIME:-0}" \
+              --argjson total_time "$TOTAL_TIME" \
+              '{
+                backend: $backend,
+                base_url: $base_url,
+                server: {
+                  status: $server_status,
+                  http_status: $server_http,
+                  response_time_ms: $server_time
+                },
+                database: {
+                  status: $database_status,
+                  data_detected: $data_detected,
+                  endpoint: $endpoint,
+                  http_status: $database_http,
+                  record_count_or_metadata: $records,
+                  response_time_ms: $database_time
+                },
+                overall_status: $overall,
+                total_response_time_ms: $total_time,
+                request_mode: "LIGHTWEIGHT_GET",
+                response_body: "HIDDEN"
+              }' > "$JSON_RESULT"
+
+          }
+
+          # ==================================================
+          # STEP 3: START ALL FIVE BACKENDS IN PARALLEL
+          # ==================================================
+
+          echo ""
+          echo "================================================"
+          echo "🚀 STARTING ALL FIVE BACKENDS"
+          echo "================================================"
+
+          check_backend \
+            "1" \
+            "Flask / Render" \
+            "$FLASK_BASE" \
+            "FLASK" &
+
+          PID_FLASK=$!
+
+          check_backend \
+            "2" \
+            "Django / Render" \
+            "$DJANGO_BASE" \
+            "DJANGO" &
+
+          PID_DJANGO=$!
+
+          check_backend \
+            "3" \
+            "FastAPI / Render" \
+            "$FASTAPI_BASE" \
+            "FASTAPI" &
+
+          PID_FASTAPI=$!
+
+          check_backend \
+            "4" \
+            "Java Spring Boot / Render" \
+            "$JAVA_BASE" \
+            "JAVA" &
+
+          PID_JAVA=$!
+
+          check_backend \
+            "5" \
+            ".NET / Render" \
+            "$DOTNET_BASE" \
+            "DOTNET" &
+
+          PID_DOTNET=$!
+
+          # ==================================================
+          # STEP 4: WAIT FOR ALL FIVE
+          # ==================================================
+
+          wait "$PID_FLASK"
+          RESULT_FLASK=$?
+
+          wait "$PID_DJANGO"
+          RESULT_DJANGO=$?
+
+          wait "$PID_FASTAPI"
+          RESULT_FASTAPI=$?
+
+          wait "$PID_JAVA"
+          RESULT_JAVA=$?
+
+          wait "$PID_DOTNET"
+          RESULT_DOTNET=$?
+
+          echo ""
+          echo "All five backend checks completed."
+
+          # ==================================================
+          # STEP 5: BUILD FINAL DASHBOARD
+          # ==================================================
+
+          SUCCESS=0
+          FAILED=0
+
+          NUMBER=0
+
+          for TYPE in FLASK DJANGO FASTAPI JAVA DOTNET; do
+
+            NUMBER=$((NUMBER + 1))
+
+            SERVER_RESULT="runtime-results/${TYPE,,}-server.txt"
+
+            DATABASE_RESULT="runtime-results/${TYPE,,}-database.txt"
+
+            if [ ! -f "$SERVER_RESULT" ] || \
+               [ ! -f "$DATABASE_RESULT" ]; then
+
+              echo "Missing result: $TYPE"
+              FAILED=$((FAILED + 1))
+              continue
+
+            fi
+
+            IFS='|' read -r SERVER_STATUS SERVER_HTTP SERVER_TIME \
+              < "$SERVER_RESULT"
+
+            IFS='|' read -r DB_STATUS DATA_DETECTED FOUND_PATH DB_HTTP RECORDS DB_TIME \
+              < "$DATABASE_RESULT"
+
+            if [ "$SERVER_STATUS" = "UP" ] && \
+               [ "$DB_STATUS" = "UP" ]; then
+
+              SUCCESS=$((SUCCESS + 1))
+
+            else
+
+              FAILED=$((FAILED + 1))
+
+            fi
+
+            if [ "$SERVER_STATUS" = "UP" ]; then
+              SERVER_ICON="🟢"
+            else
+              SERVER_ICON="🔴"
+            fi
+
+            if [ "$DB_STATUS" = "UP" ]; then
+              DB_ICON="🟢"
+            else
+              DB_ICON="🔴"
+            fi
+
+            TOTAL_TIME=$((SERVER_TIME + DB_TIME))
+
+            case "$TYPE" in
+              FLASK) NAME="Flask" ;;
+              DJANGO) NAME="Django" ;;
+              FASTAPI) NAME="FastAPI" ;;
+              JAVA) NAME="Java" ;;
+              DOTNET) NAME=".NET" ;;
+            esac
+
+            echo "| $NUMBER | **$NAME** | $SERVER_ICON **$SERVER_STATUS** | $DB_ICON **$DB_STATUS** | $DB_HTTP | $DATA_DETECTED | $RECORDS | ${TOTAL_TIME}ms |" \
+              >> "$GITHUB_STEP_SUMMARY"
+
+          done
+
+          # ==================================================
+          # STEP 6: FINAL CONSOLE SUMMARY
+          # ==================================================
+
+          echo ""
+          echo "================================================"
+          echo "🏁 ALL BACKEND CHECKS FINISHED"
+          echo "================================================"
+
+          echo "🖥️ Total Servers: 5"
+          echo "🗄️ Total Databases: 5"
+          echo "📊 Total Components: 10"
+
+          echo "🟢 Fully Detected Backends: $SUCCESS / 5"
+          echo "🔴 Incomplete / Failed Backends: $FAILED / 5"
+
+          echo "================================================"
+
+          if [ "$FAILED" -eq 0 ]; then
+
+            echo "🟢 ALL FIVE BACKENDS AND DATA ENDPOINTS DETECTED"
+
+          else
+
+            echo "🟡 SOME BACKENDS OR DATA ENDPOINTS NEED ATTENTION"
+
+          fi
+
+          echo "================================================"
+
+          # Save final counts for the next step.
+
+          echo "SUCCESS_COUNT=$SUCCESS" >> "$GITHUB_ENV"
+          echo "FAILED_COUNT=$FAILED" >> "$GITHUB_ENV"
+
+          # ==================================================
+          # STEP 7: GITHUB ACTIONS DASHBOARD
+          # ==================================================
+
+          {
+            echo ""
+            echo "## 🎯 Final 10-Component Dashboard"
+            echo ""
+            echo "| Metric | Result |"
+            echo "|---|---:|"
+            echo "| Total Backends | 5 |"
+            echo "| Total Servers | 5 |"
+            echo "| Total Databases/Data Layers | 5 |"
+            echo "| Total Components | 10 |"
+            echo "| Fully Detected Backends | $SUCCESS / 5 |"
+            echo "| Incomplete / Failed Backends | $FAILED / 5 |"
+            echo ""
+            echo "### 🚦 Status Legend"
+            echo ""
+            echo "| Status | Meaning |"
+            echo "|---|---|"
+            echo "| 🟢 Server UP | Application returned an HTTP response |"
+            echo "| 🟢 Database UP | Configured data endpoint returned valid JSON |"
+            echo "| 🟡 Server UP / Database DOWN | Server alive, data endpoint unavailable |"
+            echo "| 🔴 Server DOWN | Application could not be reached |"
+            echo ""
+            echo "### 🔒 Data Privacy"
+            echo ""
+            echo "- Lightweight GET requests only."
+            echo "- Actual API records are never printed."
+            echo "- Actual API records are never stored."
+            echo "- Only safe runtime metadata is retained."
+            echo "- No database writes are performed."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # ======================================================
+      # STEP 8: UPLOAD SAFE RUNTIME RESULTS
+      # ======================================================
+
+      - name: 📦 Upload Safe Runtime Records
+
+        if: always()
+
+        uses: actions/upload-artifact@v4
+
+        with:
+          name: backend-runtime-detection
+          path: runtime-results/
+          if-no-files-found: warn
+          retention-days: 7
+
+      # ======================================================
+      # STEP 9: FINAL REPORT
+      # ======================================================
+
+      - name: 🏁 Final Runtime Report
+
+        if: always()
+
+        shell: bash
+
+        run: |
+
+          echo ""
+          echo "================================================"
+          echo "🚀 DAILY RUNTIME MONITOR CLOSED"
+          echo "================================================"
+
+          echo "Schedule: Daily at 6:00 AM IST"
+
+          echo "Servers: 5"
+          echo "Databases: 5"
+          echo "Total Components: 10"
+
+          echo "Fully Detected Backends: ${{ env.SUCCESS_COUNT }}"
+          echo "Incomplete / Failed Backends: ${{ env.FAILED_COUNT }}"
+
+          echo ""
+          echo "Lightweight GET Detection"
+          echo "Actual Records: HIDDEN"
+          echo "Database Writes: NONE"
+          echo "Email Notifications: NONE"
+
+          echo "================================================"
